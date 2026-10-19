@@ -194,6 +194,7 @@
     for(const [name,selector] of Object.entries(soloFields))$(selector).value=cfg[name];
     $('#soloPreset').value='custom';
     $('#studioCustom').value=studio.overlayColors[id]||cfg.color;
+    $('#soloDamping').value=cfg.damping ?? s.settings.damping;
     $('#soloPreview').textContent=`Bob ${id+1}: actual recorded trajectory, length ${cfg.length} m, release heading ${cfg.phi} deg. Choose a recipe or edit any field.`;
     renderSoloAssignments();
   }
@@ -213,6 +214,7 @@
       for(const name of ['theta','spin','push'])$(soloFields[name]).value=cfg[name];
       // A new physical recipe sets initial length too; mass and color stay yours.
       $('#soloLength').value=cfg.length;
+      if(name==='spiral' && Number($('#soloDamping').value)===0)$('#soloDamping').value='0.055';
       $('#soloPreview').textContent=`Bob ${id+1}: ${name} initial conditions. Edit any value; Apply resets only this bob. Spiral contraction requires damping above zero.`;
     }catch(error){notice('Could not prepare individual preset: '+error.message);}
   }
@@ -228,6 +230,9 @@
     }
     if(!Number.isInteger(config.phi)||config.phi<0||config.phi>359)return notice('Release heading must be an integer from 0 to 359 degrees.');
     if(!hex(config.color))return notice('Choose a valid trail color.');
+    if($('#soloDamping').value.trim()==='')return notice('Enter the individual damping rate.');
+    config.damping=Number($('#soloDamping').value);
+    if(!Number.isFinite(config.damping)||config.damping<0||config.damping>.5)return notice('Individual damping must be between 0 and 0.5 s^-1.');
     try{window.PendulumPhysics.makePendulum(config);}catch(error){return notice('Bob not changed: '+error.message);}
     // Archive only after successful validation, before the original handler
     // restarts the selected bob. Other positions, velocities and tracks stay as is.
@@ -239,7 +244,11 @@
       $('#edit'+key).value=$(selector).value;
     }
     $('#editColor').value=config.color;
+    // The primary calculator inspector still owns the physically constrained reset.
+    // Its handler does not know per-bob drag, so apply the validated override
+    // through the narrow API after it finishes resetting only the chosen bob.
     $('#updateOne').click();
+    window.Pendulums.setIndividualDamping(id,config.damping);
     studio.overlayColors[id]=config.color;
     studio.soloRecipes[id]=$('#soloPreset').value;
     studio.lastFetch=-Infinity;
