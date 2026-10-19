@@ -2,7 +2,7 @@
 
 **A free, top-down 3D pendulum sandbox that draws the paths the pendulums *actually make*.**
 
-Each of up to **30 independently simulated spherical pendulums** leaves its own colored line on a virtual sand map. Change gravity, damping, string length, mass, release angle, heading, and launch speeds, and watch those changes alter the measured trajectories. Every bob's speed, kinetic/potential/total energy, vertical angular momentum, and travel distance are available in the live readout.
+Each of up to **30 independently simulated spherical pendulums** leaves its own colored line on a virtual sand map. Choose any of **360 distinct release bearings (0°–359°)** with the clickable compass, slider, or exact entry. Arrange up to 30 independently simulated bobs into **inward spirals, rosettes, petal blooms, starbursts**, or the original layouts. Change gravity, damping, string length, mass, release tilt and launch speeds, and watch those changes alter the measured trajectories. Every bob's speed, kinetic/potential/total energy, vertical angular momentum, and travel distance are available in the live readout.
 
 ![Pendulums desktop interface](preview-desktop.png)
 ![Pendulums mobile interface](preview-mobile.png)
@@ -13,7 +13,7 @@ Each of up to **30 independently simulated spherical pendulums** leaves its own 
 2. Open **`index.html`** in a browser. There is no build step, framework, internet requirement, API key, or external asset.
 3. Press **Play** if paused. Watch the color trails grow across the top-down map.
 
-For GitHub Pages, create a **new repository named `Pendulums`**, upload the contents of this directory into the root of its `main` branch, then go to **Settings → Pages → Deploy from a branch**, select **main** and **/ (root)**. GitHub Pages will then serve `index.html`, `style.css`, `physics.js`, and `app.js` as a separate site. This ZIP does **not** modify Mitchell Tech or create a GitHub repository.
+For the existing [`mitchell-d00/Pendulums`](https://github.com/mitchell-d00/Pendulums) repository, enable **Settings → Pages → Deploy from a branch**, select **main** and **/ (root)**. GitHub Pages will serve `index.html`, `style.css`, `physics.js`, and `app.js`. The application is separate from Mitchell Tech.
 
 ## Controls
 
@@ -23,7 +23,9 @@ For GitHub Pages, create a **new repository named `Pendulums`**, upload the cont
 | Reset | Restarts every bob from its configured initial position and erases their paths |
 | Clear sand | Erases only the trails; bobs keep their positions and continue from there |
 | Count (1–30) + Apply | Creates that many independent pendulums |
-| Motion arrangement | **Chromatic ribbons**, **pendulum wave**, **orbit garden**, **release fan**, or **at rest** |
+| Motion arrangement | Nine presets including **inward spirals**, **rosette loops**, **petal bloom**, and **360° starburst**; original presets remain |
+| 360 release-point compass | Select any **one of 360 directions**, 0–359° in 1° increments, using the clickable wheel, slider, or exact-number field; **Apply** rotates all selected initial launch positions; it does not create 360 pendulums |
+| Individual release point | Inspect a bob, set its Release point to 0–359°, and press Apply to change **only that bob** |
 | Gravity / damping | Changes the physics live; zero damping is the ideal conservative case |
 | Playback | Changes simulated time per real second; the physics still uses a fixed step |
 | Surface | Dark map, textured sand, or graph paper |
@@ -33,14 +35,18 @@ For GitHub Pages, create a **new repository named `Pendulums`**, upload the cont
 | Eye beside a path | Hide/show that path without stopping or deleting its data |
 | Zoom + / − / Fit | Explore the projected paths at different scales |
 
-On phones, the **map is shown first**, followed by the controls. On desktop, controls sit beside the live plot.
+On phones, the **map is shown first**, followed by the controls. On desktop, controls sit beside the live plot. The compass and keyboard-friendly angle entry work on touch screens, too.
+
+**Spiral physics:** Selecting *Inward spirals* with zero damping initially applies 0.055 s⁻¹ drag, causing the launch orbit to wind inward. Switching away removes only this automatically applied damping; manually set damping values are respected. Changing the damping slider live lets you explore the difference. A free undamped pendulum cannot continuously widen or tighten its orbit without energy entering or leaving the system. The spiral is not a prewritten path.
+
+**Release angle vs. number of pendulums:** The 360 marked release directions describe the initial **azimuth** around the shared pivot, **not 360 simultaneous pendulums**. The sandbox still allows 1–30 independently simulated masses and 30 distinct colors. Tilt controls how far each bob starts from the vertical axis; heading controls its compass direction.
 
 ## Export and reload
 
 - **PNG**: an image of the current visible sand canvas, including trails and moving bobs.
 - **SVG**: editable paths traced from the recorded points for every visible pendulum.
 - **CSV**: one record per retained measured point, including bob number, color, simulated time, 3D coordinates, speed, kinetic energy, potential energy, total mechanical energy, and vertical angular momentum.
-- **JSON session**: physics settings, original initial conditions, current 3D position and velocity, saved top-down path points and kinetic measurements. Load the JSON to continue inspecting or simulating a session. Import pauses the scene first.
+- **JSON session**: physics settings, original initial conditions, current 3D position and velocity, saved top-down path points and kinetic measurements. Load the JSON to continue inspecting or simulating a session. Import pauses the scene first. New sessions also preserve the ensemble release heading (0–359°); older version-one JSON without this field still loads as heading 0°.
 
 Recording: up to 18,000 measured samples per bob are retained. At a full 60 samples per simulated second this initially captures five minutes at full resolution; older points are **progressively thinned** once full, retaining coverage of older paths but not unlimited detail. Trails are drawn from the actual numerical positions. No procedural or pre-drawn paths are substituted. CSV and JSON export the **retained** samples, not an unlimited history.
 
@@ -78,16 +84,19 @@ Mass changes energy values but does **not** change isolated ideal pendulum motio
 With Node.js 18 or later:
 
 ```sh
-node --test tests/physics.test.cjs
+node --test tests/physics.test.cjs tests/patterns.test.cjs
 ```
 
 For desktop/mobile UI checks, install Python Playwright, ensure Chromium is at `/usr/bin/chromium`, and run:
 
 ```sh
 python tests/browser_smoke.py
+python tests/patterns_browser.py
 ```
 
-The browser harness injects the local HTML/CSS/JavaScript into an isolated Chromium document; it does not test your eventual GitHub Pages deployment. It verifies 30 individual colors, independent traces, settings, pause, per-bob updates, CSV/PNG/SVG/JSON exports, import restoration, layout, and no page errors.
+The browser harnesses inject local HTML/CSS/JavaScript into isolated Chromium documents; they do not test the deployed GitHub Pages origin. The original suite covers 30 individual colors, independent traces, settings, pause, per-bob updates, CSV/PNG/SVG/JSON exports, import restoration, layout, and errors. The new suite covers the 360° compass and presets, old-JSON compatibility, physically damped spiral launch, auto-damping cleanup, keyboard entry and touch-wheel pointer selection.
+
+**Local verification for this release:** 14/14 independent Node physics/pattern tests; 56/56 existing Chromium checks; 44/44 new browser checks at mobile and desktop sizes.
 
 ## Folder contents
 
@@ -100,7 +109,9 @@ Pendulums/
   README.md               This guide
   LICENSE                 MIT
   tests/physics.test.cjs  Deterministic physics tests
-  tests/browser_smoke.py  Chromium UI checks
+  tests/patterns.test.cjs 360 release headings, spiral, symmetry and energy tests
+  tests/browser_smoke.py  Original Chromium UI checks
+  tests/patterns_browser.py  New presets, release compass, and JSON round-trip tests
 ```
 
 Free to remix. Just plain HTML, CSS, and JavaScript.
