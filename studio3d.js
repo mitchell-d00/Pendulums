@@ -325,8 +325,11 @@
   });
   $('#focus').addEventListener('change',()=>{const id=Number($('#focus').value);if(String(id)!==$('#studioPath').value){$('#studioPath').value=String(id);fillSoloFromState();}});
   $('#soloPreset').addEventListener('change',chooseSoloPreset);
+  const nextSolo=()=>{const list=$('#studioPath');list.selectedIndex=(list.selectedIndex+1)%list.options.length;list.dispatchEvent(new Event('change',{bubbles:true}));};
   $('#soloApply').addEventListener('click',applySolo);
-  $('#soloNext').addEventListener('click',()=>{const list=$('#studioPath');list.selectedIndex=(list.selectedIndex+1)%list.options.length;list.dispatchEvent(new Event('change',{bubbles:true}));});
+  $('#soloApplyTop').addEventListener('click',applySolo);
+  $('#soloNext').addEventListener('click',nextSolo);
+  $('#soloNextTop').addEventListener('click',nextSolo);
   $('#studioCustom').addEventListener('change',e=>{
     if(!hex(e.target.value))return;
     const i=Number($('#studioPath').value),f=getFrame();studio.overlayColors[i]=e.target.value;
