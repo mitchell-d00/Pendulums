@@ -30,6 +30,7 @@
     </section>
     <section class="controlCard">
       <div class="sectionTitle"><span>01</span><h2>Ensemble</h2></div>
+      <button id="applyTop" class="fullBtn topApply" type="button" aria-label="Apply arrangement from top of ensemble panel">↺ &nbsp; Apply arrangement</button>
       <div class="formRow countRow"><label for="count">Pendulums</label><output id="countVal" for="count">12</output></div>
       <input id="count" type="range" min="1" max="30" value="12" step="1" aria-label="Number of pendulums">
       <div class="rangeEnds"><span>01</span><span>30 MAX</span></div>
@@ -45,21 +46,21 @@
         <option value="fan">Release fan</option>
         <option value="still">At rest</option>
       </select>
-      <div class="releaseControl">
-        <div class="releaseLabel"><label for="releaseHeading">360 release points</label><output id="releaseHeadingVal">0° / 359°</output></div>
-        <div class="releaseWheelPanel">
-          <canvas id="releaseDial" width="196" height="196" aria-label="Clickable 360 degree release direction wheel"></canvas>
-          <div class="releaseWheelText"><strong>Choose a starting direction</strong><p>Every 1° is a unique release position around the pivot. Drag the wheel or use the slider. Apply rotates the whole pattern, without changing string length or gravity.</p></div>
-        </div>
-        <input id="releaseHeading" type="range" min="0" max="359" step="1" value="0" aria-label="Release direction in degrees, 0 through 359">
-        <div class="releaseFields"><span>0°</span><label for="releaseExact">Exact angle <input id="releaseExact" type="number" min="0" max="359" step="1" value="0" inputmode="numeric" aria-label="Exact release direction, whole degrees from 0 to 359">°</label><span>359°</span></div>
-      </div>
       <div class="configGrid">
         <label>Gravity <output id="gravityVal" for="gravity">9.81 m/s²</output><input id="gravity" type="range" min="0" max="20" step="0.01" value="9.81"></label>
         <label>Damping <output id="dampingVal" for="damping">0.000 s⁻¹</output><input id="damping" type="range" min="0" max="0.5" step="0.005" value="0"></label>
         <label>Playback <output id="speedVal" for="speed">1.00×</output><input id="speed" type="range" min="0.25" max="3" step="0.25" value="1"></label>
       </div>
-      <button id="apply" class="fullBtn">↺ &nbsp; Apply arrangement</button>
+      <div class="releaseControl">
+        <div class="releaseLabel"><label for="releaseHeading">360 release points</label><output id="releaseHeadingVal">0° / 359°</output></div>
+        <input id="releaseHeading" type="range" min="0" max="359" step="1" value="0" aria-label="Release direction in degrees, 0 through 359">
+        <div class="releaseFields"><span>0°</span><label for="releaseExact">Exact angle <input id="releaseExact" type="number" min="0" max="359" step="1" value="0" inputmode="numeric" aria-label="Exact release direction, whole degrees from 0 to 359">°</label><span>359°</span></div>
+        <div class="releaseWheelPanel">
+          <canvas id="releaseDial" width="196" height="196" aria-label="Clickable 360 degree release direction wheel"></canvas>
+          <div class="releaseWheelText"><strong>Choose a starting direction</strong><p>Every 1° is a unique release position around the pivot. Drag the wheel or use the slider. Apply rotates the whole pattern, without changing string length or gravity.</p></div>
+        </div>
+      </div>
+      <button id="apply" class="fullBtn bottomApply" type="button">↺ &nbsp; Apply arrangement</button>
       <p class="microcopy">Pattern, count and release angle take effect on Apply. Inward spirals automatically use light damping (0.055 s⁻¹) so their physical paths tighten over time. Set damping to zero for undamped closed or precessing loops. Every visible line is still simulated motion.</p>
     </section>
     <section class="controlCard">
@@ -105,6 +106,10 @@
             </div>
             <div class="soloStudio" id="soloStudio" aria-label="Per-pendulum motion studio">
               <div class="soloStudioTitle"><strong>Individual path mode</strong><span>ONE BOB AT A TIME</span></div>
+              <div class="studioActions soloActionBar soloTopActions">
+                <button id="soloApplyTop" class="soloApply" type="button">Apply to selected pendulum</button>
+                <button id="soloNextTop" type="button">Next pendulum</button>
+              </div>
               <p class="studioInfo">Give every pendulum its own release and motion recipe. Each change restarts only the selected bob; the other bobs keep moving. Individual damping lets an inward spiral evolve beside an undamped rosette.</p>
               <div class="soloFields">
                 <label>Motion recipe<select id="soloPreset"><option value="custom">Custom physical release</option><option value="spiral">Inward spiral</option><option value="rosette">Rosette</option><option value="petals">Petals</option><option value="starburst">Radial starburst</option><option value="orbit">Orbit</option><option value="fan">Fan</option><option value="ribbons">Ribbons</option><option value="wave">Wave</option><option value="still">At rest</option></select></label>
@@ -117,7 +122,7 @@
                 <label>Individual damping (s⁻¹)<input id="soloDamping" type="number" min="0" max="0.5" step="0.005" value="0" inputmode="decimal"></label>
               </div>
               <div class="soloPreview" id="soloPreview" role="status">Custom motion for pendulum 1</div>
-              <div class="studioActions"><button id="soloApply" class="soloApply">Apply to selected pendulum</button><button id="soloNext">Next pendulum</button></div>
+              <div class="studioActions soloActionBar soloBottomActions"><button id="soloApply" class="soloApply" type="button">Apply to selected pendulum</button><button id="soloNext" type="button">Next pendulum</button></div>
               <label class="soloKeep"><input id="soloPreserve" type="checkbox" checked> Preserve this bob's previous trail as a 3D art layer</label>
               <div id="soloAssignments" class="studioInfo">Set different motion recipes for each of your 30 pendulums.</div>
             </div><p class="studioInfo">Colors and camera position do not change forces, mass, length, or energy. Apply a new pattern to build an artwork overlay.</p>
@@ -147,7 +152,9 @@
         <div><label>ANGULAR MOM.</label><strong id="metricLz">0.00</strong><small>kg·m²/s · vertical</small></div>
       </div>
       <div class="inspectorBottom"><div><div class="stackLabel">Energy through time <span class="legendTiny"><i class="kineticDot"></i> kinetic <i class="potentialDot"></i> potential</span></div><canvas id="energyChart" height="110" aria-label="Kinetic and potential energy history of selected pendulum"></canvas></div>
-      <div class="individual"><div class="stackLabel">Individual setup <span class="microcopy">Resets selected bob only</span></div><div class="individualFields">
+      <div class="individual"><div class="stackLabel">Individual setup <span class="microcopy">Resets selected bob only</span></div>
+          <button id="updateOneTop" class="smallFull inspectorTopApply" type="button">Apply to #<span id="updateNumberTop">01</span></button>
+          <div class="individualFields">
         <label>Length (m)<input id="editLength" type="number" min="0.35" max="8" step="0.05" value="2.5"></label>
         <label>Mass (kg)<input id="editMass" type="number" min="0.05" max="20" step="0.1" value="1"></label>
         <label>Tilt (°)<input id="editTheta" type="number" min="0" max="80" step="1" value="30"></label>
@@ -155,7 +162,7 @@
         <label>Launch (m/s)<input id="editSpin" type="number" min="-12" max="12" step="0.1" value="1"></label>
         <label>Radial rate (rad/s)<input id="editPush" type="number" min="-6" max="6" step="0.05" value="0"></label>
         <label>Trail color<input id="editColor" type="color" value="#71dedd" aria-label="Selected trail color"></label>
-        <button id="updateOne" class="smallFull">Apply to #<span id="updateNumber">01</span></button>
+        <button id="updateOne" class="smallFull inspectorBottomApply" type="button">Apply to #<span id="updateNumber">01</span></button>
       </div></div></div>
     </section>
     <section class="ensembleCard" aria-label="All pendulum paths and kinetics"><div class="ensembleHead"><div><div class="eyebrow">LIVE ENSEMBLE READOUT</div><h2>All <span id="tableCount">12</span> trajectories</h2></div><div class="tableKey">Click a row to inspect · toggle eye to hide trail</div></div><div class="tableScroll"><table><thead><tr><th>PATH</th><th>LENGTH</th><th>SPEED</th><th>KINETIC</th><th>POTENTIAL</th><th>ENERGY</th><th>TRACKED</th></tr></thead><tbody id="rows"></tbody></table></div><p class="microcopy" id="sampleStats">Sampling each bob at 60 snapshots per simulated second; up to 18,000 points per trail retained for exports.</p></section>
