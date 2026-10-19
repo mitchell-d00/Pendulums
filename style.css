@@ -40,3 +40,15 @@
 .releaseFields label{display:flex;align-items:center;gap:6px}
 .releaseFields input{width:64px!important;min-height:34px!important;margin:0!important;text-align:center;padding:4px;color:#d6f3dd;font:12px ui-monospace,monospace}
 @media(max-width:420px){.releaseWheelPanel canvas{width:128px;height:128px}.releaseWheelText p{font-size:9px}}
+
+
+/* Easy-reach mirrored actions and release sliders before the compass. */
+.topApply{margin:0 0 18px;min-height:46px;touch-action:manipulation}
+.bottomApply{min-height:46px;margin-top:12px}
+.releaseControl{margin-top:12px}
+.releaseControl>.releaseFields{margin:9px 0 12px}
+.releaseControl>.releaseWheelPanel{margin-top:12px;border-top:1px solid #385549;padding-top:12px}
+.inspectorTopApply,.inspectorBottomApply{width:100%;min-height:45px;touch-action:manipulation}
+.inspectorTopApply{margin:9px 0 13px}
+.inspectorBottomApply{margin-top:12px}
+button.topApply:focus-visible,button.bottomApply:focus-visible,.inspectorTopApply:focus-visible,.inspectorBottomApply:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
