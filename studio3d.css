@@ -1,0 +1,43 @@
+/* All visual styling; no changes to the simulation engine. */
+.studioCard{border:1px solid #426454;border-radius:16px;background:#172622;margin-bottom:20px;overflow:hidden;color:#e3f3e8}
+.studioHead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:17px 18px 12px}
+.studioHead h2{margin:4px 0;font-size:21px}
+.studioHead p{margin:3px 0;font-size:11px;color:#a6bfaf}
+.studioCameraControls,.studioActions,.studioChecks,.studioPaletteRow,.studioNav{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.studioCard button,.studioCard select,.studioCard input[type=color]{min-height:38px;border:1px solid #416151;background:#223932;color:#daf1df;border-radius:9px;padding:7px 11px;font-size:12px}
+.studioCard button:focus-visible,.studioCard select:focus-visible{outline:2px solid #abecc2;outline-offset:2px}
+.studioCanvasWrap{position:relative;min-height:340px;height:clamp(340px,48vw,580px);background:#101b1f;overflow:hidden}
+#space3d{width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none}
+#space3d:active{cursor:grabbing}
+.studioHud{position:absolute;left:12px;top:10px;font:11px ui-monospace,monospace;background:#101b1fc9;border:1px solid #45645488;color:#b4dbcb;border-radius:6px;padding:7px 10px;pointer-events:none}
+.studioBottom{padding:15px;display:grid;gap:14px}
+.studioInfo{color:#b7cdbf;font-size:11px;line-height:1.5}
+.studioNav{justify-content:space-between}
+.studioNav button{min-width:42px}
+.studioSettings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.studioSettings h3{font-size:12px;margin:0 0 8px;letter-spacing:.05em;color:#c6eccf}
+.studioChecks{align-items:flex-start;flex-direction:column;font-size:12px;color:#c3d8c8}
+.studioChecks label{display:flex;gap:7px;align-items:center;cursor:pointer}
+.studioChecks input{accent-color:#a5f2c1;width:17px;height:17px}
+.studioPaletteRow{align-items:end}.studioPaletteRow label{display:grid;gap:6px;font-size:11px;color:#bdd7c5}
+.studioCard select{max-width:180px}.studioCard input[type=color]{padding:3px;width:51px}
+.artLayerRow{display:flex;align-items:center;gap:8px;border-bottom:1px solid #334d40;padding:4px 0;font-size:11px}
+.artLayerRow span{flex:1;min-width:0;overflow-wrap:anywhere}
+.artLayerRow input{accent-color:#b3edc2}
+.artLayerRow button{min-height:28px;padding:2px 8px}
+.studioActions{margin-top:9px}
+.studioNotice{font-size:11px;line-height:1.5;color:#b1cfb8;min-height:16px}
+@media(max-width:760px){.studioCanvasWrap{height:55vh;min-height:350px;max-height:550px}.studioSettings{grid-template-columns:1fr}.studioHead{padding:13px}.studioBottom{padding:11px}.studioCard button{min-height:43px}.studioHud{font-size:10px;max-width:calc(100% - 20px)}}
+/* Solo motion lab: usable while holding a phone with one hand. */
+.soloStudio{margin-top:15px;padding:13px;border:1px solid #476657;background:#122b26;border-radius:12px}
+.soloStudioTitle{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#d7f2d9;font-size:14px}
+.soloStudioTitle span{font:9px ui-monospace,monospace;letter-spacing:.08em;color:#a5d6b3}
+.soloFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.soloFields label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#bed8c4;min-width:0}
+.soloFields input,.soloFields select{width:100%;max-width:none;min-width:0;min-height:42px;background:#223932;color:#eaf7ed;border:1px solid #527663;padding:8px;border-radius:8px;font:14px ui-monospace,monospace}
+.soloPreview{background:#203a2d;border-left:3px solid #a9e3b8;padding:9px;font-size:11px;line-height:1.5;color:#d8f4dd}
+.soloKeep{display:flex;align-items:center;gap:7px;margin:11px 0;color:#c9dfcd;font-size:12px}
+.soloKeep input{width:19px;height:19px;accent-color:#a5efbd}
+.soloApply{background:#a4e6b6!important;color:#163125!important;font-weight:700}
+#soloAssignments{margin-top:12px;line-height:1.6;word-break:break-word}
+@media(max-width:450px){.soloFields{grid-template-columns:1fr}.studioCard .soloApply{flex:1}.soloStudio{padding:11px}}
