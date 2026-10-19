@@ -322,7 +322,14 @@
       const count=Number($('#count').value),name=$('#preset').value;
       const heading=Number($('#releaseExact').value);
       if(!Number.isInteger(heading)||heading<0||heading>359)throw new RangeError('Choose a whole-number release point from 0 to 359°.');
-      const cfg=P.preset(count,name,model.gravity,heading).map((c,i)=>({...c,color:colorFrom(i)}));
+      // A bulk arrangement changes only ensemble-managed bobs.  Individual
+      // edits have priority until the owner explicitly clears their override.
+      const cfg=P.preset(count,name,model.gravity,heading).map((c,i)=>{
+        const previous=model.configs[i];
+        return previous?.individualOverride
+          ? {...c,...previous,id:i,individualOverride:true}
+          : {...c,id:i,color:colorFrom(i)};
+      });
       model.releaseHeading=heading;
       if(model.spiralAutoDamping && name!=='spiral'){model.damping=0;model.spiralAutoDamping=false;}
       if(name==='spiral' && model.damping===0){model.damping=SPIRAL_DAMPING;model.spiralAutoDamping=true;}
@@ -338,11 +345,16 @@
   function changeIndividual(){
     const id=model.selected;
     const old=model.configs[id];
-    const cfg={id,color:$('#editColor').value,
+    // Never discard the bob's drag/recipe metadata when the inspector edits
+    // an otherwise unrelated property (the former implementation did).
+    const cfg={...old,id,individualOverride:true,soloRecipe:'custom',color:$('#editColor').value,
       length:Number($('#editLength').value),mass:Number($('#editMass').value),
       theta:Number($('#editTheta').value),phi:Number($('#editPhi').value),
       spin:Number($('#editSpin').value),push:Number($('#editPush').value)};
     if(!validateColor(cfg.color))return notice('Choose a valid hex color.');
+    if(['Length','Mass','Theta','Phi','Spin','Push'].some(k=>$('#edit'+k).value.trim()==='') ||
+      ![cfg.length,cfg.mass,cfg.theta,cfg.phi,cfg.spin,cfg.push].every(Number.isFinite))
+      return notice('Enter valid finite numbers for every individual setting.');
     try{
       const p=P.makePendulum(cfg);
       model.configs[id]=cfg;model.pendulums[id]=p;
@@ -350,6 +362,34 @@
       storeSample(id);model.tracksDirty=true;model.groundDirty=true;
       applyFocus();renderRows();renderCanvas();notice(`Pendulum #${pad(id+1)} reset with individual settings. The others keep moving.`);
     }catch(error){notice(error.message);$('#editColor').value=old.color;}
+  }
+  function clearIndividualOverride(index){
+    if(!Number.isInteger(index)||index<0||index>=model.count)
+      throw new RangeError('Invalid pendulum index.');
+    const old=model.configs[index];
+    if(!old.individualOverride)return {index,cleared:false};
+    // Reset only the specified bob.  Remaining positions, velocities and
+    // recorded trajectories are not touched.
+    const base=P.preset(model.count,model.preset,model.gravity,model.releaseHeading)[index];
+    const cfg={...base,id:index,color:old.color};
+    const bob=P.makePendulum(cfg);
+    model.configs[index]=cfg;
+    model.pendulums[index]=bob;
+    model.tracks[index]={id:index,color:cfg.color,visible:model.tracks[index].visible,samples:[]};
+    storeSample(index);
+    model.tracksDirty=true;model.groundDirty=true;
+    applyFocus();renderRows();renderCanvas();
+    notice(`Pendulum #${pad(index+1)} returned to the ${model.preset} ensemble. The other bobs keep their own paths.`);
+    return {index,cleared:true,config:{...cfg}};
+  }
+  function setIndividualRecipe(index,recipe){
+    if(!Number.isInteger(index)||index<0||index>=model.count ||
+      !['custom','spiral','rosette','petals','starburst','spinburst','orbit','fan','ribbons','wave','still'].includes(recipe))
+      throw new RangeError('Invalid pendulum index or recipe.');
+    if(!model.configs[index].individualOverride)
+      throw new Error('Apply the individual settings before naming their recipe.');
+    model.configs[index].soloRecipe=recipe;
+    return {index,recipe,individualOverride:true};
   }
   function download(name, blob){
     const url=URL.createObjectURL(blob);const link=document.createElement('a');
@@ -501,6 +541,8 @@
       model.tracksDirty=true;applyFocus();renderRows();renderCanvas();
       return model.count;
     },
+    clearIndividualOverride,
+    setIndividualRecipe,
     setIndividualDamping(index,rate){
       if(!Number.isInteger(index)||index<0||index>=model.count)throw RangeError('Invalid pendulum index');
       if(!Number.isFinite(rate)||rate<0||rate>.5)throw RangeError('Individual damping must be from 0 to 0.5 s^-1');
