@@ -124,6 +124,10 @@
               <div class="soloPreview" id="soloPreview" role="status">Custom motion for pendulum 1</div>
               <div class="studioActions soloActionBar soloBottomActions"><button id="soloApply" class="soloApply" type="button">Apply to selected pendulum</button><button id="soloNext" type="button">Next pendulum</button></div>
               <label class="soloKeep"><input id="soloPreserve" type="checkbox" checked> Preserve this bob's previous trail as a 3D art layer</label>
+              <div class="soloOverrideRow">
+                <span class="studioInfo">Individual edits stay active when you change the ensemble pattern.</span>
+                <button id="soloResetOverride" type="button" class="soloResetBtn" aria-label="Clear the selected pendulum override and return to ensemble settings">Reset selected to ensemble</button>
+              </div>
               <div id="soloAssignments" class="studioInfo">Set different motion recipes for each of your 30 pendulums.</div>
             </div><p class="studioInfo">Colors and camera position do not change forces, mass, length, or energy. Apply a new pattern to build an artwork overlay.</p>
             <div class="studioActions"><button id="studioPNG">↓ 3D PNG</button><button id="studioSaveArt">↓ Layered art JSON</button><button onclick="document.getElementById('studioImportArt').click()">↑ Load art JSON</button><input id="studioImportArt" type="file" accept=".json,application/json" hidden></div>
