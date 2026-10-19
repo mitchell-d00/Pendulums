@@ -101,7 +101,7 @@
 
   function preset(count, name = 'wave', gravity = 9.81, releaseHeading = 0) {
     count = Math.round(checkNumber(Number(count), 1, MAX_PENDULUMS, 'Count'));
-    if (!['wave', 'orbit', 'fan', 'ribbons', 'still', 'spiral', 'rosette', 'petals', 'starburst'].includes(name)) throw new Error('Unknown preset');
+    if (!['wave', 'orbit', 'fan', 'ribbons', 'still', 'spiral', 'rosette', 'petals', 'starburst', 'spinburst'].includes(name)) throw new Error('Unknown preset');
     if (!Number.isInteger(releaseHeading) || releaseHeading < 0 || releaseHeading > 359) throw new RangeError('Release heading must be one of 360 positions (0–359 degrees)');
     return Array.from({length: count}, (_, i) => {
       const t = count <= 1 ? .5 : i / (count - 1);
@@ -140,6 +140,10 @@
       if (name === 'starburst') {
         p.length = 2.8; p.theta = 52;
         p.phi = i*360/count; p.spin = 0; p.push = 0;
+      }
+      if (name === 'spinburst') {
+        p.length = 2.8; p.theta = 52;
+        p.phi = i*360/count; p.spin = .38+.24*t; p.push = 0;
       }
       p.phi = bearing(p.phi + releaseHeading);
       return p;
