@@ -354,6 +354,9 @@
   $('#soloResetOverride').addEventListener('click',()=>{
     const id=soloSelected();
     try{
+      if($('#soloPreserve').checked &&
+        window.Pendulums.getSnapshot().tracks[id]?.config.individualOverride)
+        snapshotSoloLayer(id);
       const result=window.Pendulums.clearIndividualOverride(id);
       studio.lastFetch=-Infinity;updatePaths();fillSoloFromState();
       notice(result.cleared
