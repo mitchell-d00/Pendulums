@@ -19,7 +19,7 @@
     <section class="controlCard heroControl">
       <div class="eyebrow"><span class="pulseIcon">✦</span> SIMULATION CONTROL</div>
       <h1>Make motion<br><em>visible.</em></h1>
-      <p>Real pendulums. Real dynamics. Every sweep leaves a colored trace.</p>
+      <p>Real pendulums. Real dynamics. Try 360 release directions, spirals, rosettes and flower patterns, all traced from real motion.</p>
       <div class="transport">
         <button id="play" class="playBtn" aria-label="Pause simulation"><span id="playGlyph">Ⅱ</span><span id="playLabel">Pause</span></button>
         <button id="reset" class="secondaryBtn" title="Rewind each pendulum and erase its traces">↺ <span>Reset</span></button>
@@ -37,16 +37,29 @@
         <option value="ribbons">Chromatic ribbons</option>
         <option value="wave">Pendulum wave</option>
         <option value="orbit">Orbit garden</option>
+        <option value="spiral">Inward spirals</option>
+        <option value="rosette">Rosette loops</option>
+        <option value="petals">Petal bloom</option>
+        <option value="starburst">360° starburst</option>
         <option value="fan">Release fan</option>
         <option value="still">At rest</option>
       </select>
+      <div class="releaseControl">
+        <div class="releaseLabel"><label for="releaseHeading">360 release points</label><output id="releaseHeadingVal">0° / 359°</output></div>
+        <div class="releaseWheelPanel">
+          <canvas id="releaseDial" width="196" height="196" aria-label="Clickable 360 degree release direction wheel"></canvas>
+          <div class="releaseWheelText"><strong>Choose a starting direction</strong><p>Every 1° is a unique release position around the pivot. Drag the wheel or use the slider. Apply rotates the whole pattern, without changing string length or gravity.</p></div>
+        </div>
+        <input id="releaseHeading" type="range" min="0" max="359" step="1" value="0" aria-label="Release direction in degrees, 0 through 359">
+        <div class="releaseFields"><span>0°</span><label for="releaseExact">Exact angle <input id="releaseExact" type="number" min="0" max="359" step="1" value="0" inputmode="numeric" aria-label="Exact release direction, whole degrees from 0 to 359">°</label><span>359°</span></div>
+      </div>
       <div class="configGrid">
         <label>Gravity <output id="gravityVal" for="gravity">9.81 m/s²</output><input id="gravity" type="range" min="0" max="20" step="0.01" value="9.81"></label>
         <label>Damping <output id="dampingVal" for="damping">0.000 s⁻¹</output><input id="damping" type="range" min="0" max="0.5" step="0.005" value="0"></label>
         <label>Playback <output id="speedVal" for="speed">1.00×</output><input id="speed" type="range" min="0.25" max="3" step="0.25" value="1"></label>
       </div>
       <button id="apply" class="fullBtn">↺ &nbsp; Apply arrangement</button>
-      <p class="microcopy">Changes to pendulum count or preset take effect on Apply. Physics sliders update live.</p>
+      <p class="microcopy">Pattern, count and release angle take effect on Apply. Inward spirals automatically use light damping (0.055 s⁻¹) so their physical paths tighten over time. Set damping to zero for undamped closed or precessing loops. Every visible line is still simulated motion.</p>
     </section>
     <section class="controlCard">
       <div class="sectionTitle"><span>02</span><h2>The sand</h2></div>
@@ -76,7 +89,7 @@
       <div class="canvasHud bottomRight" id="scaleNote">LARGEST RADIUS 3.05 M</div>
       <div class="canvasEmpty" id="emptyMessage" hidden>Set a pendulum in motion to paint the sand.</div>
     </div>
-    <div class="belowCanvas"><span><span class="tinyPoint"></span> 240 PHYSICS STEPS / SIM SECOND</span><span>4TH-ORDER RK · SPHERE PROJECTION</span><span>30 INDEPENDENT BOBS</span></div>
+    <div class="belowCanvas"><span><span class="tinyPoint"></span> 240 PHYSICS STEPS / SIM SECOND</span><span>4TH-ORDER RK · SPHERE PROJECTION</span><span id="patternNote">RIBBONS · 0° RELEASE</span><span>30 INDEPENDENT BOBS</span></div>
     <section class="focusCard" aria-label="Selected pendulum">
       <div class="focusHeading"><div><div class="eyebrow">PENDULUM INSPECTOR</div><h2><span id="focusColor" class="focusSwatch"></span> Pendulum <span id="focusNumber">01</span></h2></div><div class="focusControl"><label for="focus">Inspect</label><select id="focus" aria-label="Select pendulum"></select></div></div>
       <div class="metrics" aria-live="off">
@@ -92,7 +105,7 @@
         <label>Length (m)<input id="editLength" type="number" min="0.35" max="8" step="0.05" value="2.5"></label>
         <label>Mass (kg)<input id="editMass" type="number" min="0.05" max="20" step="0.1" value="1"></label>
         <label>Tilt (°)<input id="editTheta" type="number" min="0" max="80" step="1" value="30"></label>
-        <label>Heading (°)<input id="editPhi" type="number" min="-360" max="360" step="1" value="0"></label>
+        <label>Release point (0–359°)<input id="editPhi" type="number" min="0" max="359" step="1" value="0"></label>
         <label>Launch (m/s)<input id="editSpin" type="number" min="-12" max="12" step="0.1" value="1"></label>
         <label>Radial rate (rad/s)<input id="editPush" type="number" min="-6" max="6" step="0.05" value="0"></label>
         <label>Trail color<input id="editColor" type="color" value="#71dedd" aria-label="Selected trail color"></label>
@@ -100,7 +113,7 @@
       </div></div></div>
     </section>
     <section class="ensembleCard" aria-label="All pendulum paths and kinetics"><div class="ensembleHead"><div><div class="eyebrow">LIVE ENSEMBLE READOUT</div><h2>All <span id="tableCount">12</span> trajectories</h2></div><div class="tableKey">Click a row to inspect · toggle eye to hide trail</div></div><div class="tableScroll"><table><thead><tr><th>PATH</th><th>LENGTH</th><th>SPEED</th><th>KINETIC</th><th>POTENTIAL</th><th>ENERGY</th><th>TRACKED</th></tr></thead><tbody id="rows"></tbody></table></div><p class="microcopy" id="sampleStats">Sampling each bob at 60 snapshots per simulated second; up to 18,000 points per trail retained for exports.</p></section>
-    <section class="physicsCard" id="physics"><div class="eyebrow">A NOTE ON WHAT YOU’RE SEEING</div><h2>Pretty paths. Actual physics.</h2><p>These are <b>spherical pendulums</b>: each mass hangs from a fixed point on a rigid, massless string, free to swing in any horizontal direction. Gravity and initial motion determine the path. We draw each bob’s actual top-down projection on a virtual sand surface—not the path of a bob physically dragging through real sand.</p><p>The solver advances the full 3D motion with fixed 1/240-second steps, fourth-order Runge–Kutta, and rod-length/tangent-velocity projection. With damping zero, ideal total energy and vertical angular momentum should stay almost constant, subject to numerical error. Damping removes mechanical energy. Pendulums do not interact or collide; there is no friction from sand.</p><div class="physicsEq">a = g(e<sub>z</sub> − u<sub>z</sub>u) − (|v|² / L)u − γv <span>where u = r / L</span></div><div class="refLinks">PHYSICS REFERENCES <a href="https://www.damtp.cam.ac.uk/user/dt281/dynamics/two.pdf" target="_blank" rel="noopener noreferrer">Cambridge dynamics notes ↗</a><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9460403/" target="_blank" rel="noopener noreferrer">Constrained pendulum integration ↗</a></div></section>
+    <section class="physicsCard" id="physics"><div class="eyebrow">A NOTE ON WHAT YOU’RE SEEING</div><h2>Pretty paths. Actual physics.</h2><p>These are <b>spherical pendulums</b>: each mass hangs from a fixed point on a rigid, massless string, free to swing in any horizontal direction. Gravity and initial motion determine the path. We draw each bob’s actual top-down projection on a virtual sand surface—not the path of a bob physically dragging through real sand.</p><p>The solver advances the full 3D motion with fixed 1/240-second steps, fourth-order Runge–Kutta, and rod-length/tangent-velocity projection. With damping zero, ideal total energy and vertical angular momentum should stay almost constant, subject to numerical error. Damping removes mechanical energy. Pendulums do not interact or collide; there is no friction from sand. Spiral trails are generated by launch momentum plus physical damping, not drawn as arbitrary spiral curves. With damping off, an ideal free pendulum cannot sustain an ever-growing spiral without external driving.</p><div class="physicsEq">a = g(e<sub>z</sub> − u<sub>z</sub>u) − (|v|² / L)u − γv <span>where u = r / L</span></div><div class="refLinks">PHYSICS REFERENCES <a href="https://www.damtp.cam.ac.uk/user/dt281/dynamics/two.pdf" target="_blank" rel="noopener noreferrer">Cambridge dynamics notes ↗</a><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9460403/" target="_blank" rel="noopener noreferrer">Constrained pendulum integration ↗</a></div></section>
   </section>
 </main>
 <footer class="footer">PENDULUMS · A LITTLE LAB FOR MOTION, COLOR &amp; CURIOSITY <span>BUILT WITH HTML, CSS &amp; JAVASCRIPT · FREE TO EXPLORE</span></footer>
