@@ -118,6 +118,7 @@
     $('#focus').value=String(model.selected);
     $('#focusNumber').textContent=pad(model.selected+1);
     $('#updateNumber').textContent=pad(model.selected+1);
+    $('#updateNumberTop').textContent=pad(model.selected+1);
     $('#focusColor').style.background=config.color;
     const map={Length:'length',Mass:'mass',Theta:'theta',Phi:'phi',Spin:'spin',Push:'push',Color:'color'};
     Object.entries(map).forEach(([key,val])=>$('#edit'+key).value=config[val]);
@@ -437,7 +438,9 @@
     $('#releaseDial').setPointerCapture?.(e.pointerId);setReleaseFromWheel(e);
   });
   $('#releaseDial').addEventListener('pointermove',e=>{if(e.buttons&1)setReleaseFromWheel(e);});
-  $('#apply').addEventListener('click',()=>{reconfigure();updateControls();});
+  const applyArrangement=()=>{reconfigure();updateControls();};
+  $('#apply').addEventListener('click',applyArrangement);
+  $('#applyTop').addEventListener('click',applyArrangement);
   $('#gravity').addEventListener('input',e=>{model.gravity=Number(e.target.value);updateControls();updateMeasures();renderRows();});
   $('#damping').addEventListener('input',e=>{model.damping=Number(e.target.value);model.spiralAutoDamping=false;updateControls();});
   $('#speed').addEventListener('input',e=>{model.speed=Number(e.target.value);updateControls();});
@@ -447,6 +450,7 @@
   $('#weight').addEventListener('input',e=>{model.weight=Number(e.target.value);model.tracksDirty=true;$('#weightVal').textContent=num(model.weight,1)+' px';});
   $('#focus').addEventListener('change',e=>setSelected(Number(e.target.value)));
   $('#updateOne').addEventListener('click',changeIndividual);
+  $('#updateOneTop').addEventListener('click',changeIndividual);
   $('#rows').addEventListener('click',event=>{
     const toggle=event.target.closest('[data-toggle]');
     if(toggle){const i=Number(toggle.dataset.toggle);model.tracks[i].visible=!model.tracks[i].visible;model.tracksDirty=true;renderRows();renderCanvas();updateControls();return;}
