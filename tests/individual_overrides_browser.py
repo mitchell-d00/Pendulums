@@ -91,14 +91,25 @@ with sync_playwright() as pw:
         check(f'{width}: top ensemble Apply also preserves override',
               snapshot(page)['tracks'][1]['config']['length']==4.25 and
               snapshot(page)['tracks'][1]['config']['damping']==.08)
+        saved=snapshot(page)
+        page.locator('#file').set_input_files({
+            'name':'override-save.json',
+            'mimeType':'application/json',
+            'buffer':json.dumps(saved).encode('utf-8')
+        })
+        page.wait_for_timeout(70)
+        check(f'{width}: imported session keeps individual override',
+              snapshot(page)['tracks'][1]['config']['individualOverride'] is True and
+              snapshot(page)['tracks'][1]['config']['damping']==.08)
         page.locator('#studioPath').select_option('1')
+        before_reset_other=snapshot(page)['tracks'][0]['current']
         page.locator('#soloResetOverride').click()
         after=snapshot(page)
         check(f'{width}: explicit reset clears only selected override',
               not after['tracks'][1]['config'].get('individualOverride') and
               after['tracks'][1]['config']['length']!=4.25)
         check(f'{width}: reset leaves other bobs unchanged',
-              after['tracks'][0]['current']==snapshot(page)['tracks'][0]['current'])
+              after['tracks'][0]['current']==before_reset_other)
         check(f'{width}: reset returns ensemble status',
               'following ensemble' in page.locator('#soloPreview').inner_text())
         check(f'{width}: no uncaught JS errors',not errors)
