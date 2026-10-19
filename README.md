@@ -150,3 +150,16 @@ Both ends of each applicable editor now have the same actions, making long setti
 Buttons have touch-friendly minimum heights and visible keyboard focus indicators. This changes the layout and controls only; the same constrained spherical-pendulum solver and saved artwork remain unchanged.
 
 **Regression:** The release was exercised in Chromium at 390px and 1280px with **84/84 local browser checks** (including matching action behavior and preserved unrelated bobs). The existing **8/8 baseline physics checks** also passed. Reproduce the mirrored-action tests with `python tests/mirrored_actions_browser.py` using Python Playwright and a local Chromium executable; GitHub Pages itself was not browser-tested during this update.
+
+
+## Individual edits take priority over ensemble presets
+
+**Individual Path Mode now keeps your edits.** When you apply a custom setup to a bob, it receives a **persistent individual override** for its physical parameters: length, mass, tilt, heading, tangential velocity, radial rate, and damping. Applying a different ensemble arrangement from either top or bottom Apply button recreates the ensemble bobs while **retaining overridden parameters** for any existing selected bobs. Those bobs still use the same spherical-pendulum solver, gravity, and physical constraints. Existing overrides are preserved in exported session JSON and restored on import.
+
+Select a bob in **Make it yours**, choose a motion recipe or edit its values, and press **Apply to selected pendulum**. Its status explicitly shows **individual override ACTIVE**. Numeric fields display readable decimals instead of binary-floating-point tails, and legacy fractional preset bearings are displayed as the nearest whole-degree release step; the physics isn't changed until Apply is pressed. Editing a recipe parameter changes the displayed recipe to **Custom physical release**, so the label matches the entered values.
+
+To give one bob back to the ensemble, select it and press **Reset selected to ensemble**. That action resets only that bob to the currently selected ensemble's initial conditions, without touching the other bobs. When **Preserve this bob's previous trail** is enabled, it archives the old measured trail as an art layer before resetting.
+
+**What Apply Arrangement means:** it reinitializes the ensemble simulation, preserving your individual *configurations*, not the bobs' ongoing positions or unsaved live trails. Use **Keep previous artwork on new patterns** or save an art layer to preserve those drawings.
+
+The dedicated regression file `tests/individual_overrides_browser.py` exercises inherited fractional angles, both individual and ensemble Apply controls, preset precedence, individual damping, saved-session restoration, and explicit reset. Run it with Python Playwright and Chromium. This is a source-level browser test, not verification of a completed GitHub Pages deployment.
