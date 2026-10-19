@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101918">
+  <meta name="description" content="Pendulums: a top-down 30-pendulum physics sandbox that draws the actual paths of freely swinging spherical pendulums.">
+  <title>Pendulums — Sand &amp; Motion Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="identity" href="#stage" aria-label="Pendulums home"><span class="logo"><span></span></span><span class="brand"><strong>PENDULUMS</strong><small>SAND &amp; MOTION LAB</small></span></a>
+  <div class="headerMeta"><span class="liveDot" aria-hidden="true"></span><span>LOCAL PHYSICS ENGINE</span><span class="separator">/</span><span>NO CLOUD · NO API KEYS</span></div>
+  <a class="topLink" href="#physics">THE PHYSICS <span aria-hidden="true">↗</span></a>
+</header>
+<main class="workspace">
+  <aside class="sidebar" aria-label="Simulation setup">
+    <section class="controlCard heroControl">
+      <div class="eyebrow"><span class="pulseIcon">✦</span> SIMULATION CONTROL</div>
+      <h1>Make motion<br><em>visible.</em></h1>
+      <p>Real pendulums. Real dynamics. Every sweep leaves a colored trace.</p>
+      <div class="transport">
+        <button id="play" class="playBtn" aria-label="Pause simulation"><span id="playGlyph">Ⅱ</span><span id="playLabel">Pause</span></button>
+        <button id="reset" class="secondaryBtn" title="Rewind each pendulum and erase its traces">↺ <span>Reset</span></button>
+        <button id="clear" class="secondaryBtn" title="Erase only the sand trails, keeping the pendulums moving">⌁ <span>Clear sand</span></button>
+      </div>
+      <div class="statstrip"><div><small>ELAPSED</small><strong id="time">00:00.00</strong></div><div><small>SIMULATION</small><strong id="runStatus">RUNNING</strong></div></div>
+    </section>
+    <section class="controlCard">
+      <div class="sectionTitle"><span>01</span><h2>Ensemble</h2></div>
+      <div class="formRow countRow"><label for="count">Pendulums</label><output id="countVal" for="count">12</output></div>
+      <input id="count" type="range" min="1" max="30" value="12" step="1" aria-label="Number of pendulums">
+      <div class="rangeEnds"><span>01</span><span>30 MAX</span></div>
+      <label class="stackLabel" for="preset">Motion arrangement</label>
+      <select id="preset">
+        <option value="ribbons">Chromatic ribbons</option>
+        <option value="wave">Pendulum wave</option>
+        <option value="orbit">Orbit garden</option>
+        <option value="fan">Release fan</option>
+        <option value="still">At rest</option>
+      </select>
+      <div class="configGrid">
+        <label>Gravity <output id="gravityVal" for="gravity">9.81 m/s²</output><input id="gravity" type="range" min="0" max="20" step="0.01" value="9.81"></label>
+        <label>Damping <output id="dampingVal" for="damping">0.000 s⁻¹</output><input id="damping" type="range" min="0" max="0.5" step="0.005" value="0"></label>
+        <label>Playback <output id="speedVal" for="speed">1.00×</output><input id="speed" type="range" min="0.25" max="3" step="0.25" value="1"></label>
+      </div>
+      <button id="apply" class="fullBtn">↺ &nbsp; Apply arrangement</button>
+      <p class="microcopy">Changes to pendulum count or preset take effect on Apply. Physics sliders update live.</p>
+    </section>
+    <section class="controlCard">
+      <div class="sectionTitle"><span>02</span><h2>The sand</h2></div>
+      <label class="stackLabel" for="theme">Surface</label>
+      <select id="theme"><option value="dark">Obsidian grid</option><option value="sand">Warm sand</option><option value="paper">Graph paper</option></select>
+      <div class="switchRow"><label for="trailsToggle">Draw actual paths</label><input type="checkbox" id="trailsToggle" checked></div>
+      <div class="switchRow"><label for="bobToggle">Show moving bobs</label><input type="checkbox" id="bobToggle" checked></div>
+      <div class="switchRow"><label for="labelToggle">Number the bobs</label><input type="checkbox" id="labelToggle"></div>
+      <div class="switchRow"><label for="followToggle">Highlight selected trail</label><input type="checkbox" id="followToggle" checked></div>
+      <div class="configGrid"><label>Line weight <output id="weightVal" for="weight">1.7 px</output><input id="weight" type="range" min="0.6" max="4" value="1.7" step="0.1"></label></div>
+      <p class="microcopy">Each colored line is made of measured (x, y) positions. It is not a pre-drawn animation. Samples are stored for export.</p>
+    </section>
+    <section class="controlCard toolsCard">
+      <div class="sectionTitle"><span>03</span><h2>Take it with you</h2></div>
+      <div class="toolButtons"><button id="png">↓ PNG image</button><button id="svg">↓ SVG paths</button><button id="csv">↓ CSV samples</button><button id="json">↓ JSON session</button></div>
+      <button id="load" class="importBtn">↑ &nbsp; Load JSON session</button><input id="file" type="file" accept="application/json,.json" hidden>
+      <p id="notice" class="microcopy" role="status" aria-live="polite">Everything runs in this browser.</p>
+    </section>
+  </aside>
+  <section class="mainArea" id="stage" aria-label="Top-down pendulum sand drawing">
+    <div class="stageHeader"><div><div class="eyebrow">LIVE TRAJECTORY MAP <span class="littleTag">TOP DOWN · XY PLANE</span></div><h2>Thirty stories of motion.</h2></div><div class="stageActions"><button id="zoomOut" title="Zoom out" aria-label="Zoom out">−</button><button id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button><button id="fit" title="Reset view">⌖ <span>Fit view</span></button></div></div>
+    <div class="canvasShell">
+      <canvas id="sand" aria-label="Top-down map showing the paths of the simulated pendulums">Your browser needs canvas support.</canvas>
+      <div class="canvasHud topLeft"><span class="hudDot"></span> <span id="activeCount">12 ACTIVE TRAILS</span></div>
+      <div class="canvasHud topRight">1 GRID = 1 METER <span>↗</span></div>
+      <div class="canvasHud bottomLeft"><span class="legendCross">⊕</span> FIXED PIVOT · SHARED ORIGIN</div>
+      <div class="canvasHud bottomRight" id="scaleNote">LARGEST RADIUS 3.05 M</div>
+      <div class="canvasEmpty" id="emptyMessage" hidden>Set a pendulum in motion to paint the sand.</div>
+    </div>
+    <div class="belowCanvas"><span><span class="tinyPoint"></span> 240 PHYSICS STEPS / SIM SECOND</span><span>4TH-ORDER RK · SPHERE PROJECTION</span><span>30 INDEPENDENT BOBS</span></div>
+    <section class="focusCard" aria-label="Selected pendulum">
+      <div class="focusHeading"><div><div class="eyebrow">PENDULUM INSPECTOR</div><h2><span id="focusColor" class="focusSwatch"></span> Pendulum <span id="focusNumber">01</span></h2></div><div class="focusControl"><label for="focus">Inspect</label><select id="focus" aria-label="Select pendulum"></select></div></div>
+      <div class="metrics" aria-live="off">
+        <div><label>SPEED</label><strong id="metricSpeed">0.00</strong><small>m/s</small></div>
+        <div><label>KINETIC</label><strong id="metricKinetic">0.00</strong><small>joules</small></div>
+        <div><label>POTENTIAL</label><strong id="metricPotential">0.00</strong><small>joules</small></div>
+        <div><label>TOTAL ENERGY</label><strong id="metricEnergy">0.00</strong><small>joules</small></div>
+        <div><label>PATH LENGTH</label><strong id="metricDistance">0.00</strong><small>meters · top view</small></div>
+        <div><label>ANGULAR MOM.</label><strong id="metricLz">0.00</strong><small>kg·m²/s · vertical</small></div>
+      </div>
+      <div class="inspectorBottom"><div><div class="stackLabel">Energy through time <span class="legendTiny"><i class="kineticDot"></i> kinetic <i class="potentialDot"></i> potential</span></div><canvas id="energyChart" height="110" aria-label="Kinetic and potential energy history of selected pendulum"></canvas></div>
+      <div class="individual"><div class="stackLabel">Individual setup <span class="microcopy">Resets selected bob only</span></div><div class="individualFields">
+        <label>Length (m)<input id="editLength" type="number" min="0.35" max="8" step="0.05" value="2.5"></label>
+        <label>Mass (kg)<input id="editMass" type="number" min="0.05" max="20" step="0.1" value="1"></label>
+        <label>Tilt (°)<input id="editTheta" type="number" min="0" max="80" step="1" value="30"></label>
+        <label>Heading (°)<input id="editPhi" type="number" min="-360" max="360" step="1" value="0"></label>
+        <label>Launch (m/s)<input id="editSpin" type="number" min="-12" max="12" step="0.1" value="1"></label>
+        <label>Radial rate (rad/s)<input id="editPush" type="number" min="-6" max="6" step="0.05" value="0"></label>
+        <label>Trail color<input id="editColor" type="color" value="#71dedd" aria-label="Selected trail color"></label>
+        <button id="updateOne" class="smallFull">Apply to #<span id="updateNumber">01</span></button>
+      </div></div></div>
+    </section>
+    <section class="ensembleCard" aria-label="All pendulum paths and kinetics"><div class="ensembleHead"><div><div class="eyebrow">LIVE ENSEMBLE READOUT</div><h2>All <span id="tableCount">12</span> trajectories</h2></div><div class="tableKey">Click a row to inspect · toggle eye to hide trail</div></div><div class="tableScroll"><table><thead><tr><th>PATH</th><th>LENGTH</th><th>SPEED</th><th>KINETIC</th><th>POTENTIAL</th><th>ENERGY</th><th>TRACKED</th></tr></thead><tbody id="rows"></tbody></table></div><p class="microcopy" id="sampleStats">Sampling each bob at 60 snapshots per simulated second; up to 18,000 points per trail retained for exports.</p></section>
+    <section class="physicsCard" id="physics"><div class="eyebrow">A NOTE ON WHAT YOU’RE SEEING</div><h2>Pretty paths. Actual physics.</h2><p>These are <b>spherical pendulums</b>: each mass hangs from a fixed point on a rigid, massless string, free to swing in any horizontal direction. Gravity and initial motion determine the path. We draw each bob’s actual top-down projection on a virtual sand surface—not the path of a bob physically dragging through real sand.</p><p>The solver advances the full 3D motion with fixed 1/240-second steps, fourth-order Runge–Kutta, and rod-length/tangent-velocity projection. With damping zero, ideal total energy and vertical angular momentum should stay almost constant, subject to numerical error. Damping removes mechanical energy. Pendulums do not interact or collide; there is no friction from sand.</p><div class="physicsEq">a = g(e<sub>z</sub> − u<sub>z</sub>u) − (|v|² / L)u − γv <span>where u = r / L</span></div><div class="refLinks">PHYSICS REFERENCES <a href="https://www.damtp.cam.ac.uk/user/dt281/dynamics/two.pdf" target="_blank" rel="noopener noreferrer">Cambridge dynamics notes ↗</a><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9460403/" target="_blank" rel="noopener noreferrer">Constrained pendulum integration ↗</a></div></section>
+  </section>
+</main>
+<footer class="footer">PENDULUMS · A LITTLE LAB FOR MOTION, COLOR &amp; CURIOSITY <span>BUILT WITH HTML, CSS &amp; JAVASCRIPT · FREE TO EXPLORE</span></footer>
+<script src="physics.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
