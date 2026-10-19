@@ -115,3 +115,27 @@ Pendulums/
 ```
 
 Free to remix. Just plain HTML, CSS, and JavaScript.
+
+
+## Interactive XYZ studio and individual paths
+
+**3D motion box.** The new first panel draws measured bob positions and trails as real `(x, y, z)` coordinates. `z` increases downward, matching the gravitational coordinate convention used by `physics.js`. This is a rotating *orthographic* 3D visualization, not a second simulator or a physically solid sand box. Use **Top**, **3D**, **Side**, or **Under** for quick angles. On touchscreens, drag one finger to orbit around the paths, use two fingers to pinch-zoom and pan, or choose **Pan mode** for one-finger movement. Mouse drag rotates, Shift-drag pans, and the wheel zooms. Direction and zoom buttons are provided for accessibility.
+
+**Preserve your artwork while changing arrangements.** Leave **Keep previous artwork on new patterns** checked, then make a rosette, switch to a fan, and apply a starburst. The existing sampled paths are frozen into separately hideable/removable 3D artwork layers before each new arrangement replaces the live initial conditions. **Save current art layer** lets you capture art without changing the pendulums. Up to **8 layers** are kept at once, with bounded, sampled paths (at most about 800 XYZ points per pendulum per saved layer). Download PNG or a separate layered-art JSON file; re-import a saved art JSON independently of a full physics session. Existing trajectory CSV and physics-session JSON exports remain available. The art layers store measured position samples, not computed decorative curves.
+
+**Individual path mode.** In **Make it yours**, choose **Individual pendulum**, then expand the **Individual path mode** controls. Each of the up to **30 pendulums** can use its own physical release recipe, chosen from rosette, spiral, petal, starburst, fan, orbit, ribbons, wave, rest, or manual settings. Set each pendulum's **0–359° release heading**, string length, mass, release tilt, tangential launch speed, radial rate, damping, and hex trail color. Choose **Apply to selected pendulum** to reinitialize *only that bob* with validated initial conditions. Other bobs' XYZ states, velocities, existing tracks, and kinetic measurements are left untouched; they keep swinging. **Next pendulum** speeds up designing all 30. If **Preserve this bob's previous trail** is enabled, the old track is archived as a single-bob art layer.
+
+**Science is preserved.** The same constrained spherical-pendulum RK4 integrator runs all bobs at a fixed 240 simulation steps per second. Gravity, length constraint, launch velocity, and drag determine the resulting paths. A solo pendulum's `config.damping` is an optional, validated drag coefficient (0–0.5 s⁻¹). With no override it inherits ensemble damping, so one bob can spiral inward with drag while another follows an undamped orbit. The 3D camera, art freezes, colors, and line weight have **no effect** on the equations of motion. Pendulums remain ideal, independent masses with massless rigid strings, no collisions, and no physical sand-contact forces.
+
+### Reproducible checks
+
+```sh
+node --test tests/physics.test.cjs tests/patterns.test.cjs tests/studio3d.test.cjs tests/physics_damping_regression.cjs
+python tests/browser_smoke.py
+python tests/patterns_browser.py
+python tests/studio3d_browser.py
+python tests/solo_browser.py
+```
+
+The Node checks use only built-in modules. Browser checks require a local Python Playwright installation and Chromium at `/usr/bin/chromium`; the game itself uses only HTML, CSS, and plain JavaScript. In the 3D/per-bob development run the dedicated suites passed **12/12 Node checks**, **54/54 studio browser checks**, and **54/54 solo-path browser checks**, across desktop and phone viewports. These browser runs exercised locally injected source, **not a deployed GitHub Pages session**.
+
