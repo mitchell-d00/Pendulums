@@ -26,3 +26,17 @@
  .ensembleCard{order:9;width:100%}
  .physicsCard{order:10;width:100%}
 }
+
+/* 360 discrete release bearings with a pointer-friendly compass. */
+.releaseControl{border:1px solid #385549;border-radius:10px;padding:13px;margin:14px 0 17px;background:#13241e}
+.releaseLabel{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px;font-weight:750;color:#d7eadb}
+.releaseLabel output{font:12px ui-monospace,monospace;color:#b8efbe}
+.releaseWheelPanel{display:flex;gap:12px;align-items:center;margin:8px 0}
+.releaseWheelPanel canvas{width:148px;height:148px;flex-shrink:0;touch-action:none;cursor:crosshair}
+.releaseWheelText strong{font-size:11px;color:#e7eddc}
+.releaseWheelText p{font-size:10px;color:#95b09c;line-height:1.65}
+.releaseControl input[type=range]{width:100%;accent-color:#b8efbe}
+.releaseFields{display:flex;justify-content:space-between;gap:7px;align-items:center;font:10px ui-monospace,monospace;color:#9bb3a4;margin-top:9px}
+.releaseFields label{display:flex;align-items:center;gap:6px}
+.releaseFields input{width:64px!important;min-height:34px!important;margin:0!important;text-align:center;padding:4px;color:#d6f3dd;font:12px ui-monospace,monospace}
+@media(max-width:420px){.releaseWheelPanel canvas{width:128px;height:128px}.releaseWheelText p{font-size:9px}}
