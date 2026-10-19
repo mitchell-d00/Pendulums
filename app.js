@@ -121,7 +121,14 @@
     $('#updateNumberTop').textContent=pad(model.selected+1);
     $('#focusColor').style.background=config.color;
     const map={Length:'length',Mass:'mass',Theta:'theta',Phi:'phi',Spin:'spin',Push:'push',Color:'color'};
-    Object.entries(map).forEach(([key,val])=>$('#edit'+key).value=config[val]);
+    Object.entries(map).forEach(([key,val])=>{
+      const raw=config[val];
+      // Long binary-float tails from release-fan presets are not useful
+      // editing values. Keep the precise simulation state until Apply.
+      $('#edit'+key).value=key==='Color'?raw:key==='Phi'
+        ? String(Math.round(((raw%360)+360)%360)%360)
+        : String(Number(Number(raw).toFixed(5)));
+    });
     updateMeasures();
   }
   function setSelected(index){model.selected=clamp(index,0,model.count-1);applyFocus();renderRows();}
