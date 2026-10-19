@@ -129,12 +129,13 @@
   function setCamera(kind){
     if(kind==='top'){studio.yaw=0;studio.pitch=Math.PI/2;}
     else if(kind==='side'){studio.yaw=0;studio.pitch=0;}
+    else if(kind==='under'){studio.yaw=0;studio.pitch=-Math.PI/2;}
     else {studio.yaw=-.55;studio.pitch=.67;}
     studio.panX=studio.panY=0;studio.zoom=1;studio.center=[0,0,3.5];studio.redraw=true;
   }
   function pan(dx,dy){studio.panX+=dx;studio.panY+=dy;studio.redraw=true;}
   function zoom(factor){studio.zoom=clamp(studio.zoom*factor,.38,7);studio.redraw=true;}
-  function orbit(dx,dy){studio.yaw+=dx*.008;studio.pitch=clamp(studio.pitch+dy*.007,0,Math.PI/2);studio.redraw=true;}
+  function orbit(dx,dy){studio.yaw+=dx*.008;studio.pitch=clamp(studio.pitch+dy*.007,-Math.PI/2,Math.PI/2);studio.redraw=true;}
   function midpoint(arr){return [(arr[0].x+arr[1].x)/2,(arr[0].y+arr[1].y)/2];}
   canvas.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0&&e.button!==2)return;
@@ -305,6 +306,7 @@
   $('#studioTop').addEventListener('click',()=>setCamera('top'));
   $('#studioIso').addEventListener('click',()=>setCamera('iso'));
   $('#studioSide').addEventListener('click',()=>setCamera('side'));
+  $('#studioUnder').addEventListener('click',()=>setCamera('under'));
   $('#studioZoomIn').addEventListener('click',()=>zoom(1.23));
   $('#studioZoomOut').addEventListener('click',()=>zoom(1/1.23));
   $('#studioPan').addEventListener('click',()=>{studio.mode=studio.mode==='orbit'?'pan':'orbit';$('#studioPan').textContent=studio.mode==='pan'?'Pan mode ✓':'Pan mode';});
