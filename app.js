@@ -13,6 +13,7 @@
   const groundCanvas = document.createElement('canvas');
   const groundCtx = groundCanvas.getContext('2d');
   const MAX_SAMPLES = 18000;
+  const SPIRAL_DAMPING = 0.055;
   const SAMPLE_STEPS = 4; // 240 Hz integration -> 60 Hz trajectory recording
   const STYLE = {
     dark: { background: '#101a19', grid:'#283d36', axis:'#4c6c5b', text:'#88a699', pivot:'#d7c1a0', noise:'#d5bc91' },
@@ -20,7 +21,7 @@
     paper: { background: '#f1eee1', grid:'#d7ddce', axis:'#aebba7', text:'#637c72', pivot:'#415d4e', noise:'#7a9e87' }
   };
   const model = {
-    configs:[], pendulums:[], tracks:[], count:12, preset:'ribbons', gravity:9.81,
+    configs:[], pendulums:[], tracks:[], count:12, preset:'ribbons', releaseHeading:0, spiralAutoDamping:false, gravity:9.81,
     damping:0, speed:1, time:0, running:true, selected:0,
     drawTrails:true, drawBobs:true, drawLabels:false, highlight:true,
     weight:1.7, theme:'dark', zoom:1, panX:0, panY:0,
@@ -93,6 +94,8 @@
     $('#damping').value=model.damping;$('#dampingVal').textContent=num(model.damping,3)+' s⁻¹';
     $('#speed').value=model.speed;$('#speedVal').textContent=num(model.speed)+'×';
     $('#preset').value=model.preset;$('#theme').value=model.theme;
+    $('#patternNote').textContent=`${model.preset.toUpperCase()} · ${model.releaseHeading}° RELEASE`;
+    syncReleaseControls(model.releaseHeading); 
     $('#trailsToggle').checked=model.drawTrails;$('#bobToggle').checked=model.drawBobs;
     $('#labelToggle').checked=model.drawLabels;$('#followToggle').checked=model.highlight;
     $('#weight').value=model.weight;$('#weightVal').textContent=num(model.weight,1)+' px';
@@ -121,6 +124,42 @@
     updateMeasures();
   }
   function setSelected(index){model.selected=clamp(index,0,model.count-1);applyFocus();renderRows();}
+
+  function syncReleaseControls(degrees){
+    const heading=((Math.round(degrees)%360)+360)%360;
+    model.releaseHeading=heading;
+    $('#releaseHeading').value=String(heading);
+    $('#releaseExact').value=String(heading);
+    $('#releaseHeadingVal').textContent=heading+'° / 359°';
+    drawReleaseWheel();
+  }
+  function drawReleaseWheel(){
+    const dial=$('#releaseDial');if(!dial)return;
+    const g=dial.getContext('2d'), w=dial.width, c=w/2, r=w*.39;
+    g.clearRect(0,0,w,w);
+    g.beginPath();g.arc(c,c,r,0,2*Math.PI);g.strokeStyle='#5d7a69';g.lineWidth=1.5;g.stroke();
+    // All 360 available bearings are marked; major markings every 30°.
+    for(let i=0;i<360;i++){
+      const a=(i-90)*Math.PI/180, major=i%30===0;
+      g.beginPath();g.moveTo(c+Math.cos(a)*r*(major?.82:.94),c+Math.sin(a)*r*(major?.82:.94));
+      g.lineTo(c+Math.cos(a)*r,c+Math.sin(a)*r);
+      g.strokeStyle=major?'#b5e7c9':'#547064';g.lineWidth=major?1.8:.6;g.stroke();
+    }
+    const a=(model.releaseHeading-90)*Math.PI/180;
+    g.beginPath();g.moveTo(c,c);g.lineTo(c+Math.cos(a)*r*.81,c+Math.sin(a)*r*.81);
+    g.strokeStyle='#b8efbe';g.lineWidth=3;g.stroke();
+    g.beginPath();g.arc(c+Math.cos(a)*r*.81,c+Math.sin(a)*r*.81,5,0,2*Math.PI);
+    g.fillStyle='#f3c88d';g.fill();
+    g.fillStyle='#e0eedf';g.font='600 19px ui-monospace,monospace';g.textAlign='center';
+    g.fillText(model.releaseHeading+'°',c,c+6);
+  }
+  function setReleaseFromWheel(event){
+    const rect=$('#releaseDial').getBoundingClientRect();
+    const x=(event.clientX-rect.left)/rect.width*$('#releaseDial').width-$('#releaseDial').width/2;
+    const y=(event.clientY-rect.top)/rect.height*$('#releaseDial').height-$('#releaseDial').height/2;
+    if(Math.hypot(x,y)<12)return;
+    syncReleaseControls(Math.round((Math.atan2(y,x)*180/Math.PI+90+360)%360));
+  }
 
   function chooseScale(){return (Math.min(model.width,model.height)*.5)/(Math.max(...model.configs.map(x=>x.length))+.36)*model.zoom;}
   function project(x,y){const scale=chooseScale();return [model.width*.5+model.panX+x*scale,model.height*.5+model.panY-y*scale];}
@@ -277,8 +316,13 @@
   function reconfigure(){
     try{
       const count=Number($('#count').value),name=$('#preset').value;
-      const cfg=P.preset(count,name,model.gravity).map((c,i)=>({...c,color:colorFrom(i)}));
-      model.preset=name;build(cfg);notice(`New ${name} arrangement: ${count} independent pendulums.`);
+      const heading=Number($('#releaseExact').value);
+      if(!Number.isInteger(heading)||heading<0||heading>359)throw new RangeError('Choose a whole-number release point from 0 to 359°.');
+      const cfg=P.preset(count,name,model.gravity,heading).map((c,i)=>({...c,color:colorFrom(i)}));
+      model.releaseHeading=heading;
+      if(model.spiralAutoDamping && name!=='spiral'){model.damping=0;model.spiralAutoDamping=false;}
+      if(name==='spiral' && model.damping===0){model.damping=SPIRAL_DAMPING;model.spiralAutoDamping=true;}
+      model.preset=name;build(cfg);notice(`New ${name} pattern: ${count} real pendulums launched at ${heading}° on the 360-point wheel.`);
     }catch(error){notice(error.message);}
   }
   function clearSand(){
@@ -333,7 +377,7 @@
   }
   function session(){return {
     format:'pendulums-sand-session',version:1,created:new Date().toISOString(),
-    elapsed:model.time,selected:model.selected,preset:model.preset,
+    elapsed:model.time,selected:model.selected,preset:model.preset,releaseHeading:model.releaseHeading,
     settings:{gravity:model.gravity,damping:model.damping,speed:model.speed,theme:model.theme,weight:model.weight},
     tracks:model.tracks.map((t,i)=>({config:{...model.configs[i]},visible:t.visible,
       current:{r:[...model.pendulums[i].r],v:[...model.pendulums[i].v],distance:model.pendulums[i].distance,groundDistance:model.pendulums[i].groundDistance},
@@ -359,16 +403,18 @@
         tr.current.distance<0||tr.current.groundDistance<0||!Array.isArray(tr.samples)||tr.samples.length>MAX_SAMPLES||
         tr.samples.some((s,j)=>!Array.isArray(s)||s.length!==9||!s.every(Number.isFinite)||s[0]<0||s[0]>json.elapsed+.01||(j>0&&s[0]<tr.samples[j-1][0]));
     }))throw new Error('Invalid path, physics state or samples in JSON.');
-    if(typeof json.preset!=='string'||!['wave','orbit','fan','ribbons','still'].includes(json.preset))throw new Error('Invalid motion preset.');
+    if(typeof json.preset!=='string'||!['wave','orbit','fan','ribbons','still','spiral','rosette','petals','starburst'].includes(json.preset))throw new Error('Invalid motion preset.');
+    const releaseHeading=json.releaseHeading??0;
+    if(!Number.isInteger(releaseHeading)||releaseHeading<0||releaseHeading>359)throw new Error('Invalid release heading (0–359).');
     return {configs:json.tracks.map((tr,i)=>({...tr.config,id:i})),settings,
-      restored:{elapsed:json.elapsed,selected:json.selected,tracks:json.tracks.map(tr=>({...tr,samples:tr.samples.map(s=>({t:s[0],x:s[1],y:s[2],z:s[3],speed:s[4],kinetic:s[5],potential:s[6],total:s[7],angularMomentumZ:s[8]}))}))},preset:json.preset};
+      restored:{elapsed:json.elapsed,selected:json.selected,tracks:json.tracks.map(tr=>({...tr,samples:tr.samples.map(s=>({t:s[0],x:s[1],y:s[2],z:s[3],speed:s[4],kinetic:s[5],potential:s[6],total:s[7],angularMomentumZ:s[8]}))}))},preset:json.preset,releaseHeading};
   }
   async function loadJSON(event){
     const file=event.target.files?.[0];if(!file)return;
     try{
       if(file.size>65_000_000)throw new Error('JSON too large (65 MB maximum).');
       const parsed=parseSession(JSON.parse(await file.text()));
-      Object.assign(model,parsed.settings);model.preset=parsed.preset;
+      Object.assign(model,parsed.settings);model.preset=parsed.preset;model.releaseHeading=parsed.releaseHeading;model.spiralAutoDamping=false;
       model.running=false;build(parsed.configs,parsed.restored);updateControls();
       notice(`Loaded ${model.count} pendulums and ${model.tracks.reduce((n,t)=>n+t.samples.length,0).toLocaleString()} recorded points. Paused for inspection.`);
     }catch(error){notice('Import not applied: '+error.message);}finally{event.target.value='';}
@@ -378,9 +424,18 @@
   $('#reset').addEventListener('click',()=>{model.running=false;build(model.configs);updateControls();notice('Restarted every pendulum at its selected initial conditions. Press Play to run.');});
   $('#clear').addEventListener('click',clearSand);
   $('#count').addEventListener('input',e=>$('#countVal').textContent=e.target.value);
+  $('#releaseHeading').addEventListener('input',e=>syncReleaseControls(Number(e.target.value)));
+  $('#releaseExact').addEventListener('input',e=>{
+    const n=Number(e.target.value);
+    if(e.target.value!==''&&Number.isInteger(n)&&n>=0&&n<=359)syncReleaseControls(n);
+  });
+  $('#releaseDial').addEventListener('pointerdown',e=>{
+    $('#releaseDial').setPointerCapture?.(e.pointerId);setReleaseFromWheel(e);
+  });
+  $('#releaseDial').addEventListener('pointermove',e=>{if(e.buttons&1)setReleaseFromWheel(e);});
   $('#apply').addEventListener('click',()=>{reconfigure();updateControls();});
   $('#gravity').addEventListener('input',e=>{model.gravity=Number(e.target.value);updateControls();updateMeasures();renderRows();});
-  $('#damping').addEventListener('input',e=>{model.damping=Number(e.target.value);updateControls();});
+  $('#damping').addEventListener('input',e=>{model.damping=Number(e.target.value);model.spiralAutoDamping=false;updateControls();});
   $('#speed').addEventListener('input',e=>{model.speed=Number(e.target.value);updateControls();});
   $('#theme').addEventListener('change',e=>{model.theme=e.target.value;model.groundDirty=true;renderCanvas();});
   for(const [id,key] of [['trailsToggle','drawTrails'],['bobToggle','drawBobs'],['labelToggle','drawLabels'],['followToggle','highlight']])
@@ -410,7 +465,7 @@
   document.addEventListener('visibilitychange',()=>{model.lastFrame=0;model.accumulator=0;});
   // Stable no-key read-only hooks for reproducible browser tests / agents.
   window.Pendulums = Object.freeze({
-    get status(){return {running:model.running,time:model.time,count:model.count,gravity:model.gravity,damping:model.damping,speed:model.speed};},
+    get status(){return {running:model.running,time:model.time,count:model.count,gravity:model.gravity,damping:model.damping,speed:model.speed,preset:model.preset,releaseHeading:model.releaseHeading};},
     getSnapshot(){return session();},
     play(){model.running=true;updateControls();},pause(){model.running=false;updateControls();},
     clearSand,fitView(){model.zoom=1;model.panX=0;model.panY=0;model.groundDirty=true;model.tracksDirty=true;renderCanvas();}
