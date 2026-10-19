@@ -1,0 +1,90 @@
+"""Scientific per-bob art studio tests, real Chromium at phone/desktop widths.
+Tests locally injected source, not the deployed GitHub Pages origin.
+"""
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+root=Path(__file__).resolve().parents[1]
+source={x:(root/x).read_text() for x in ('index.html','style.css','studio3d.css','physics.js','app.js','studio3d.js')}
+checks=[]
+def expect(label,good):
+ if not good:raise AssertionError(label)
+ checks.append(label)
+with sync_playwright() as pw:
+ browser=pw.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
+ for width in (390,1280):
+  page=browser.new_page(viewport={'width':width,'height':840},accept_downloads=True,has_touch=(width==390))
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  markup=source['index.html']
+  for f in ('physics.js','app.js','studio3d.js'):
+   markup=markup.replace('<script src="'+f+'"></script>','')
+  page.set_content(markup,wait_until='load')
+  for f in ('style.css','studio3d.css'):page.add_style_tag(content=source[f])
+  for f in ('physics.js','app.js','studio3d.js'):page.add_script_tag(content=source[f])
+  page.wait_for_timeout(800)
+  expect(f'{width} no initial errors',not errors)
+  expect(f'{width} new individual mode visible',page.locator('#soloStudio').is_visible())
+  expect(f'{width} all 9 recipes plus custom',page.locator('#soloPreset option').count()==10)
+  expect(f'{width} no horizontal overflow',page.evaluate('document.documentElement.scrollWidth<=innerWidth+2'))
+  page.locator('#play').click()
+  initial=page.evaluate('Pendulums.getSnapshot()')
+  expect(f'{width} paused for invariant comparisons',not page.evaluate('Pendulums.status.running'))
+  page.locator('#studioPath').select_option('3')
+  expect(f'{width} selected bob synced to inspector',page.locator('#focus').input_value()=='3')
+  page.locator('#soloPreset').select_option('rosette')
+  page.locator('#soloHeading').fill('124')
+  page.locator('#soloSpin').fill('1.7')
+  page.locator('#soloMass').fill('1.4')
+  page.locator('#studioCustom').fill('#ffaa33')
+  before=page.evaluate('Pendulums.getSnapshot()')
+  page.locator('#soloApply').click()
+  after=page.evaluate('Pendulums.getSnapshot()')
+  expect(f'{width} target bob heading',after['tracks'][3]['config']['phi']==124)
+  expect(f'{width} bob-specific damping stored',after['tracks'][3]['config']['damping']==0)
+  expect(f'{width} damping preserves other bob settings',all(after['tracks'][i]['config']==before['tracks'][i]['config'] for i in range(12) if i!=3))
+  expect(f'{width} target bob physics and palette',after['tracks'][3]['config']['mass']==1.4 and after['tracks'][3]['config']['spin']==1.7 and after['tracks'][3]['config']['color']=='#ffaa33')
+  expect(f'{width} exactly one bob reset',all(after['tracks'][i]['current']==before['tracks'][i]['current'] for i in range(12) if i!=3))
+  expect(f'{width} other recorded paths unaffected',all(after['tracks'][i]['samples']==before['tracks'][i]['samples'] for i in range(12) if i!=3))
+  expect(f'{width} solo trace restarts',len(after['tracks'][3]['samples'])==1)
+  expect(f'{width} one bob frozen in art layer',page.evaluate('PendulumsStudio.state.layerCount')==1 and len(page.evaluate('PendulumsStudio.getArtwork()')[0]['tracks'])==1)
+  expect(f'{width} independent recipe recorded',page.evaluate('PendulumsStudio.getSoloRecipes()[3]')=='rosette')
+  page.locator('#soloNext').click()
+  expect(f'{width} Next advances selected bob',page.locator('#studioPath').input_value()=='4')
+  page.locator('#soloPreset').select_option('fan')
+  page.locator('#soloDamping').fill('0.11')
+  page.locator('#soloHeading').fill('305')
+  page.locator('#soloPreserve').uncheck()
+  page.locator('#soloApply').click()
+  after2=page.evaluate('Pendulums.getSnapshot()')
+  expect(f'{width} second bob independent fan',after2['tracks'][4]['config']['phi']==305)
+  expect(f'{width} independent drag differs between bobs',after2['tracks'][4]['config']['damping']==0.11 and after2['tracks'][3]['config']['damping']==0)
+  expect(f'{width} first bob remains rosette',after2['tracks'][3]['config']==after['tracks'][3]['config'])
+  expect(f'{width} skip archival works',page.evaluate('PendulumsStudio.state.layerCount')==1)
+  page.locator('#soloHeading').fill('360')
+  invalid=page.evaluate('Pendulums.getSnapshot().tracks[4].config')
+  page.locator('#soloApply').click()
+  expect(f'{width} heading 360 rejected',page.evaluate('Pendulums.getSnapshot().tracks[4].config')==invalid)
+  page.locator('#soloHeading').fill('359')
+  page.locator('#soloLength').fill('0')
+  page.locator('#soloApply').click()
+  expect(f'{width} invalid length rejected',page.evaluate('Pendulums.getSnapshot().tracks[4].config')==invalid)
+  # 30 independently configured bobs across different modes, each with unique release bearing.
+  page.locator('#count').fill('30')
+  page.locator('#apply').click()
+  page.locator('#play').click()  # currently paused -> running; pause to compare.
+  page.locator('#play').click()
+  expect(f'{width} 30 bobs available',page.evaluate('Pendulums.getSnapshot().tracks.length')==30)
+  page.locator('#soloPreserve').uncheck()
+  recipes=['spiral','rosette','petals','starburst','orbit','fan','wave','ribbons','still','custom']
+  for i in range(30):
+   page.locator('#studioPath').select_option(str(i))
+   page.locator('#soloPreset').select_option(recipes[i%len(recipes)])
+   page.locator('#soloHeading').fill(str((i*11)%360))
+   page.locator('#soloApply').click()
+  batch=page.evaluate('Pendulums.getSnapshot()')
+  expect(f'{width} 30 custom headings',all(t['config']['phi']==(i*11)%360 for i,t in enumerate(batch['tracks'])))
+  expect(f'{width} 30 individually assigned recipes',len(page.evaluate('Object.keys(PendulumsStudio.getSoloRecipes())'))==30)
+  expect(f'{width} 30 physically constrained lengths',all(abs(sum(v*v for v in t['current']['r'])**.5 - t['config']['length'])<1e-8 for t in batch['tracks']))
+  expect(f'{width} no JS errors after all configurations',not errors)
+  page.close()
+ browser.close()
+print(f'{len(checks)}/{len(checks)} individual-mode Chromium checks passed')
