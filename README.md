@@ -139,3 +139,14 @@ python tests/solo_browser.py
 
 The Node checks use only built-in modules. Browser checks require a local Python Playwright installation and Chromium at `/usr/bin/chromium`; the game itself uses only HTML, CSS, and plain JavaScript. In the 3D/per-bob development run the dedicated suites passed **12/12 Node checks**, **54/54 studio browser checks**, and **54/54 solo-path browser checks**, across desktop and phone viewports. These browser runs exercised locally injected source, **not a deployed GitHub Pages session**.
 
+## Easy-reach Apply and Next buttons
+
+Both ends of each applicable editor now have the same actions, making long settings panels easier to use on a phone:
+
+- **Ensemble:** **Apply arrangement** at the top (under the panel title) and at the bottom. Sliders and the exact release-angle entry come **before** the 360-degree compass wheel, with the dial near the bottom of the settings.
+- **Individual path mode:** **Apply to selected pendulum** and **Next pendulum** are paired at the top and bottom. Either pair runs the same function; changing one bob does not restart the other 29.
+- **Pendulum inspector:** **Apply to #XX** is now at the top and bottom of the individual setup, and both labels update when selecting a different bob.
+
+Buttons have touch-friendly minimum heights and visible keyboard focus indicators. This changes the layout and controls only; the same constrained spherical-pendulum solver and saved artwork remain unchanged.
+
+**Regression:** The release was exercised in Chromium at 390px and 1280px with **84/84 local browser checks** (including matching action behavior and preserved unrelated bobs). The existing **8/8 baseline physics checks** also passed. Reproduce the mirrored-action tests with `python tests/mirrored_actions_browser.py` using Python Playwright and a local Chromium executable; GitHub Pages itself was not browser-tested during this update.
