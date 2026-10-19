@@ -188,22 +188,37 @@
   const soloFields={length:'#soloLength',mass:'#soloMass',theta:'#soloTheta',
     phi:'#soloHeading',spin:'#soloSpin',push:'#soloPush'};
   function soloSelected(){return Number($('#studioPath').value)||0;}
+  const tidySolo=(n,places=4)=>String(Number(Number(n).toFixed(places)));
   function fillSoloFromState(){
     const id=soloSelected(),s=window.Pendulums.getSnapshot(),bob=s.tracks[id];
     if(!bob)return;
     const cfg=bob.config;
-    for(const [name,selector] of Object.entries(soloFields))$(selector).value=cfg[name];
-    $('#soloPreset').value='custom';
+    for(const [name,selector] of Object.entries(soloFields))
+      $(selector).value=tidySolo(cfg[name]);
+    // Legacy presets contain fractional headings (e.g. 96.015528...).
+    // Release-wheel editing uses one-degree steps. Normalize the DISPLAY,
+    // not the simulated state, until Apply is intentionally pressed.
+    $('#soloHeading').value=String(Math.round(((cfg.phi%360)+360)%360)%360);
+    const recipe=cfg.individualOverride?(cfg.soloRecipe||'custom'):'custom';
+    $('#soloPreset').value=[...$('#soloPreset').options].some(o=>o.value===recipe)?recipe:'custom';
     $('#studioCustom').value=studio.overlayColors[id]||cfg.color;
-    $('#soloDamping').value=cfg.damping ?? s.settings.damping;
-    $('#soloPreview').textContent=`Bob ${id+1}: actual recorded trajectory, length ${cfg.length} m, release heading ${cfg.phi} deg. Choose a recipe or edit any field.`;
+    $('#soloDamping').value=tidySolo(cfg.damping ?? s.settings.damping,5);
+    $('#soloPreview').textContent=cfg.individualOverride
+      ? `Bob ${id+1}: individual ${recipe} override ACTIVE. Length ${tidySolo(cfg.length)} m; heading ${tidySolo(cfg.phi)}°. Ensemble Apply will keep this bob's setup.`
+      : `Bob ${id+1}: following ensemble ${s.preset}. Heading ${tidySolo(cfg.phi)}°; edit and Apply to give this bob priority.`;
     renderSoloAssignments();
   }
   function renderSoloAssignments(){
-    const items=Object.entries(studio.soloRecipes).sort((a,b)=>Number(a[0])-Number(b[0]));
+    const snapshot=window.Pendulums.getSnapshot();
+    const items=snapshot.tracks
+      .map((track,id)=>({id,config:track.config}))
+      .filter(entry=>entry.config.individualOverride);
+    studio.soloRecipes=Object.fromEntries(items.map(({id,config})=>
+      [id,config.soloRecipe||'custom']));
     $('#soloAssignments').textContent=items.length?
-      'Independent setups: '+items.map(([id,mode])=>`#${Number(id)+1} ${mode}`).join(' / '):
-      'No individual recipes assigned yet. Choose any bob to begin.';
+      'Individual overrides ('+items.length+'/'+snapshot.tracks.length+'): '+
+        items.map(({id,config})=>`#${id+1} ${config.soloRecipe||'custom'}`).join(' / '):
+      'All bobs currently follow the ensemble preset. Apply a solo setup to override one.';
   }
   function chooseSoloPreset(){
     const name=$('#soloPreset').value,id=soloSelected();
@@ -250,11 +265,12 @@
     // through the narrow API after it finishes resetting only the chosen bob.
     $('#updateOne').click();
     window.Pendulums.setIndividualDamping(id,config.damping);
+    const recipe=$('#soloPreset').value;
+    window.Pendulums.setIndividualRecipe(id,recipe);
     studio.overlayColors[id]=config.color;
-    studio.soloRecipes[id]=$('#soloPreset').value;
     studio.lastFetch=-Infinity;
-    renderSoloAssignments();updatePaths();
-    notice(`Bob ${id+1} set to ${studio.soloRecipes[id]}. Only its initial state and trail restarted; other bob physics continued.`);
+    renderSoloAssignments();updatePaths();fillSoloFromState();
+    notice(`Bob ${id+1} has a persistent ${recipe} override. Ensemble Apply will keep its physics settings, and the other bobs continue undisturbed.`);
   }
   function renderLayerList(){
     const slot=$('#artLayers');slot.replaceChildren();
@@ -271,21 +287,24 @@
   }
   // Capture BEFORE the older app's Apply, Reset or Clear Sand handler drops samples.
   const archiveBefore=()=>{if(studio.keep){snapshotLayer();studio.lastFetch=-Infinity;}};
-  const applyButton=$('#apply');
-  applyButton.addEventListener('click',()=>{
+  const archiveEnsemble=()=>{
     const heading=Number($('#releaseExact').value),count=Number($('#count').value);
-    if(!Number.isInteger(heading)||heading<0||heading>359||count<1||count>30)return;
+    if(!Number.isInteger(heading)||heading<0||heading>359||
+       !Number.isInteger(count)||count<1||count>30)return;
     archiveBefore();
-    // The old app resets configurations on Apply. Reapply presentation colors only,
-    // never change bob position, velocity, energy or the integrator.
+    // Rebuilding ensemble bobs now PRESERVES individually overridden configs.
+    // Refresh the visual layers and override labels without clearing metadata.
     setTimeout(()=>{
-      studio.lastFetch=-Infinity;studio.soloRecipes={};updatePaths();
+      studio.lastFetch=-Infinity;updatePaths();renderSoloAssignments();
       if(studio.palette!=='original' && typeof window.Pendulums.setTrailColors==='function'){
         const cols=getFrame(true).tracks.map((t,i)=>studio.overlayColors[i]||t.color);
         window.Pendulums.setTrailColors(cols);
       }
+      fillSoloFromState();
     },0);
-  },{capture:true});
+  };
+  for(const id of ['apply','applyTop'])
+    $('#'+id).addEventListener('click',archiveEnsemble,{capture:true});
   for(const id of ['reset','clear'])$('#'+id).addEventListener('click',archiveBefore,{capture:true});
   function setPalette(name){
     studio.palette=name;studio.overlayColors={};
@@ -325,6 +344,23 @@
   });
   $('#focus').addEventListener('change',()=>{const id=Number($('#focus').value);if(String(id)!==$('#studioPath').value){$('#studioPath').value=String(id);fillSoloFromState();}});
   $('#soloPreset').addEventListener('change',chooseSoloPreset);
+  // Editing an individual numeric control after choosing a recipe creates a
+  // genuinely custom release, rather than leaving a misleading preset label.
+  for(const selector of Object.values(soloFields).concat('#soloDamping')){
+    $(selector).addEventListener('input',()=>{
+      $('#soloPreset').value='custom';
+    });
+  }
+  $('#soloResetOverride').addEventListener('click',()=>{
+    const id=soloSelected();
+    try{
+      const result=window.Pendulums.clearIndividualOverride(id);
+      studio.lastFetch=-Infinity;updatePaths();fillSoloFromState();
+      notice(result.cleared
+        ? `Bob ${id+1} now follows the ensemble ${window.Pendulums.status.preset}; all other paths are unchanged.`
+        : `Bob ${id+1} is already following the ensemble.`);
+    }catch(error){notice(error.message);}
+  });
   const nextSolo=()=>{const list=$('#studioPath');list.selectedIndex=(list.selectedIndex+1)%list.options.length;list.dispatchEvent(new Event('change',{bubbles:true}));};
   $('#soloApply').addEventListener('click',applySolo);
   $('#soloApplyTop').addEventListener('click',applySolo);
