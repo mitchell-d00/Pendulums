@@ -11,6 +11,7 @@
   const MAX_PENDULUMS = 30;
   const FIXED_DT = 1 / 240;
   const rad = deg => deg * Math.PI / 180;
+  const bearing = deg => ((deg % 360) + 360) % 360;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const norm = r => Math.hypot(r[0], r[1], r[2]);
   const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -98,9 +99,10 @@
       angle: Math.acos(clamp(p.r[2] / p.length, -1, 1)) * 180 / Math.PI};
   }
 
-  function preset(count, name = 'wave', gravity = 9.81) {
+  function preset(count, name = 'wave', gravity = 9.81, releaseHeading = 0) {
     count = Math.round(checkNumber(Number(count), 1, MAX_PENDULUMS, 'Count'));
-    if (!['wave', 'orbit', 'fan', 'ribbons', 'still'].includes(name)) throw new Error('Unknown preset');
+    if (!['wave', 'orbit', 'fan', 'ribbons', 'still', 'spiral', 'rosette', 'petals', 'starburst'].includes(name)) throw new Error('Unknown preset');
+    if (!Number.isInteger(releaseHeading) || releaseHeading < 0 || releaseHeading > 359) throw new RangeError('Release heading must be one of 360 positions (0–359 degrees)');
     return Array.from({length: count}, (_, i) => {
       const t = count <= 1 ? .5 : i / (count - 1);
       const p = {id: i, length: 2.1 + .95 * t, mass: 1, theta: 32, phi: 0, spin: 0, push: 0, color: colorFor(i)};
@@ -116,6 +118,30 @@
         p.spin = 1.25 + (i % 5) * .24; p.push = (i % 4 - 1.5) * .06;
       }
       if (name === 'still') { p.theta = 0; p.phi = i * 12; p.spin = 0; }
+      // Each new pattern uses the same gravity/constraint solver as the other
+      // presets. No curve is pre-rendered; bob positions draw every stroke.
+      if (name === 'spiral') {
+        p.length = 2.35 + .9*t; p.theta = 42 - 9*t;
+        p.phi = i*360/count;
+        // Near-circular initial motion decays under drag into inward loops.
+        const th=rad(p.theta);
+        p.spin = Math.sin(th)*Math.sqrt(gravity*p.length/Math.cos(th))*(.94+.1*t);
+      }
+      if (name === 'rosette') {
+        p.length = 2.45 + .7*t; p.theta = 43 - 5*t;
+        p.phi = i*360/count;
+        const th=rad(p.theta);
+        p.spin = Math.sin(th)*Math.sqrt(gravity*p.length/Math.cos(th))*(.56+.18*t);
+      }
+      if (name === 'petals') {
+        p.length = 2.6 + .3*(i%3); p.theta = 49;
+        p.phi = i*360/count; p.spin = (i%2===0 ? 1 : -1)*.2;
+      }
+      if (name === 'starburst') {
+        p.length = 2.8; p.theta = 52;
+        p.phi = i*360/count; p.spin = 0; p.push = 0;
+      }
+      p.phi = bearing(p.phi + releaseHeading);
       return p;
     });
   }
