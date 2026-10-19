@@ -7,6 +7,7 @@
   <meta name="description" content="Pendulums: a top-down 30-pendulum physics sandbox that draws the actual paths of freely swinging spherical pendulums.">
   <title>Pendulums — Sand &amp; Motion Lab</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="studio3d.css">
 </head>
 <body>
 <header class="topbar">
@@ -79,7 +80,52 @@
       <p id="notice" class="microcopy" role="status" aria-live="polite">Everything runs in this browser.</p>
     </section>
   </aside>
-  <section class="mainArea" id="stage" aria-label="Top-down pendulum sand drawing">
+  <section class="mainArea" id="stage" aria-label="Interactive 3D pendulums and top-down trajectory map">
+    <section class="studioCard" aria-label="Interactive three-dimensional Pendulums art studio">
+      <div class="studioHead"><div><div class="eyebrow">3D LIVE MOTION · TRUE XYZ TRAJECTORIES</div><h2>Explore your kinetic art</h2><p>One finger rotates · two fingers pinch and pan · mouse wheel zooms · shift-drag pans</p></div>
+        <div class="studioCameraControls"><button id="studioTop">Top</button><button id="studioIso">3D</button><button id="studioSide">Side</button><button id="studioPan">Pan mode</button></div>
+      </div>
+      <div class="studioCanvasWrap"><canvas id="space3d" aria-label="Rotatable X Y Z pendulum trajectories in a three dimensional box, touch to orbit, pinch to zoom and pan"></canvas>
+        <div class="studioHud" id="studioCamera">3D · X Y Z</div></div>
+      <div class="studioBottom">
+        <div class="studioNav"><div><button id="studioZoomOut" aria-label="Zoom out 3D view">−</button><button id="studioZoomIn" aria-label="Zoom in 3D view">+</button> <button id="studioLeft" aria-label="Move view left">←</button><button id="studioUp" aria-label="Move view up">↑</button><button id="studioDown" aria-label="Move view down">↓</button><button id="studioRight" aria-label="Move view right">→</button></div><span class="studioInfo">X · Y · Z↓ real meters</span></div>
+        <div class="studioSettings">
+          <div><h3>LAYERS &amp; LIVE ART</h3><div class="studioChecks">
+            <label><input id="studioKeep" type="checkbox" checked>Keep previous artwork on new patterns</label>
+            <label><input id="studioTrails" type="checkbox" checked>Show live motion trails</label>
+            <label><input id="studioStrings" type="checkbox" checked>Show pendulum strings</label>
+            <label><input id="studioBox" type="checkbox" checked>Show XYZ grid box</label>
+          </div><div class="studioActions"><button id="studioFreeze">＋ Save current art layer</button><button id="studioClearArt">Clear saved art</button></div>
+            <div class="studioInfo" id="studioLayers">0 / 8 stored layers</div><div id="artLayers"></div>
+          </div>
+          <div><h3>MAKE IT YOURS</h3><div class="studioPaletteRow">
+              <label>Color palette<select id="studioPalette"><option value="original">Original 30 colors</option><option value="neon">Neon</option><option value="ocean">Ocean</option><option value="warm">Warm</option><option value="pastel">Pastels</option></select></label>
+              <label>Individual pendulum<select id="studioPath"></select></label>
+              <label>Custom color<input type="color" id="studioCustom" value="#90dfbd"></label>
+            </div>
+            <div class="soloStudio" id="soloStudio" aria-label="Per-pendulum motion studio">
+              <div class="soloStudioTitle"><strong>Individual path mode</strong><span>ONE BOB AT A TIME</span></div>
+              <p class="studioInfo">Give every pendulum its own release and motion recipe. Each change restarts only the selected bob; the other bobs keep moving. Individual damping lets an inward spiral evolve beside an undamped rosette.</p>
+              <div class="soloFields">
+                <label>Motion recipe<select id="soloPreset"><option value="custom">Custom physical release</option><option value="spiral">Inward spiral</option><option value="rosette">Rosette</option><option value="petals">Petals</option><option value="starburst">Radial starburst</option><option value="orbit">Orbit</option><option value="fan">Fan</option><option value="ribbons">Ribbons</option><option value="wave">Wave</option><option value="still">At rest</option></select></label>
+                <label>Release heading (0-359 degrees)<input id="soloHeading" type="number" min="0" max="359" step="1" value="0" inputmode="numeric"></label>
+                <label>Length (m)<input id="soloLength" type="number" min="0.35" max="8" step="0.05" value="2.5"></label>
+                <label>Mass (kg)<input id="soloMass" type="number" min="0.05" max="20" step="0.05" value="1"></label>
+                <label>Tilt (degrees)<input id="soloTheta" type="number" min="0" max="80" step="1" value="30"></label>
+                <label>Tangential launch (m/s)<input id="soloSpin" type="number" min="-12" max="12" step="0.05" value="0"></label>
+                <label>Radial rate (rad/s)<input id="soloPush" type="number" min="-6" max="6" step="0.05" value="0"></label>
+                <label>Individual damping (s⁻¹)<input id="soloDamping" type="number" min="0" max="0.5" step="0.005" value="0" inputmode="decimal"></label>
+              </div>
+              <div class="soloPreview" id="soloPreview" role="status">Custom motion for pendulum 1</div>
+              <div class="studioActions"><button id="soloApply" class="soloApply">Apply to selected pendulum</button><button id="soloNext">Next pendulum</button></div>
+              <label class="soloKeep"><input id="soloPreserve" type="checkbox" checked> Preserve this bob's previous trail as a 3D art layer</label>
+              <div id="soloAssignments" class="studioInfo">Set different motion recipes for each of your 30 pendulums.</div>
+            </div><p class="studioInfo">Colors and camera position do not change forces, mass, length, or energy. Apply a new pattern to build an artwork overlay.</p>
+            <div class="studioActions"><button id="studioPNG">↓ 3D PNG</button><button id="studioSaveArt">↓ Layered art JSON</button><button onclick="document.getElementById('studioImportArt').click()">↑ Load art JSON</button><input id="studioImportArt" type="file" accept=".json,application/json" hidden></div>
+          </div>
+        </div><div class="studioNotice" id="studioNotice" role="status" aria-live="polite">The 3D camera is independent of the pendulum motion. Physics stays unchanged.</div>
+      </div>
+    </section>
     <div class="stageHeader"><div><div class="eyebrow">LIVE TRAJECTORY MAP <span class="littleTag">TOP DOWN · XY PLANE</span></div><h2>Thirty stories of motion.</h2></div><div class="stageActions"><button id="zoomOut" title="Zoom out" aria-label="Zoom out">−</button><button id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button><button id="fit" title="Reset view">⌖ <span>Fit view</span></button></div></div>
     <div class="canvasShell">
       <canvas id="sand" aria-label="Top-down map showing the paths of the simulated pendulums">Your browser needs canvas support.</canvas>
@@ -119,5 +165,6 @@
 <footer class="footer">PENDULUMS · A LITTLE LAB FOR MOTION, COLOR &amp; CURIOSITY <span>BUILT WITH HTML, CSS &amp; JAVASCRIPT · FREE TO EXPLORE</span></footer>
 <script src="physics.js"></script>
 <script src="app.js"></script>
+<script src="studio3d.js"></script>
 </body>
 </html>
