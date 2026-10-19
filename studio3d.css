@@ -41,3 +41,12 @@
 .soloApply{background:#a4e6b6!important;color:#163125!important;font-weight:700}
 #soloAssignments{margin-top:12px;line-height:1.6;word-break:break-word}
 @media(max-width:450px){.soloFields{grid-template-columns:1fr}.studioCard .soloApply{flex:1}.soloStudio{padding:11px}}
+
+
+/* Twin actions: always reachable at the top and bottom of the solo editor. */
+.soloActionBar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.72fr);gap:9px}
+.soloActionBar button{width:100%;min-height:46px;white-space:normal;touch-action:manipulation}
+.soloTopActions{margin:13px 0 14px}
+.soloBottomActions{margin:12px 0}
+.soloActionBar button:focus-visible{outline:2px solid #abecc2;outline-offset:3px}
+@media(max-width:460px){.soloActionBar{grid-template-columns:1fr 1fr}.soloActionBar button{font-size:11px;padding:9px 7px;line-height:1.25}}
