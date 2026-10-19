@@ -30,7 +30,7 @@ with sync_playwright() as pw:
         check(f'{width}: release compass visible',page.locator('#releaseDial').is_visible())
         check(f'{width}: 360 discrete slider positions',page.locator('#releaseHeading').get_attribute('max')=='359' and page.locator('#releaseHeading').get_attribute('step')=='1')
         check(f'{width}: zero bearing initially',page.evaluate('Pendulums.status.releaseHeading')==0)
-        check(f'{width}: nine motion presets available',page.locator('#preset option').count()==9)
+        check(f'{width}: ten motion presets available',page.locator('#preset option').count()==10)
         page.locator('#releaseHeading').fill('359')
         check(f'{width}: slider updates exact bearing',page.locator('#releaseExact').input_value()=='359')
         page.locator('#count').fill('30')
