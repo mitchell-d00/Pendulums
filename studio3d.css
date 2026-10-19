@@ -50,3 +50,11 @@
 .soloBottomActions{margin:12px 0}
 .soloActionBar button:focus-visible{outline:2px solid #abecc2;outline-offset:3px}
 @media(max-width:460px){.soloActionBar{grid-template-columns:1fr 1fr}.soloActionBar button{font-size:11px;padding:9px 7px;line-height:1.25}}
+
+
+/* Persistent per-bob settings, explicit override release, touch-friendly. */
+.soloOverrideRow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:11px;padding-top:12px;border-top:1px solid #3b5949}
+.soloOverrideRow .studioInfo{flex:1;min-width:170px}
+.soloStudio .soloResetBtn{background:#1b3430;color:#cce8d5;border:1px solid #547666;min-height:45px;padding:9px 12px;touch-action:manipulation}
+.soloStudio .soloResetBtn:focus-visible{outline:2px solid #abecc2;outline-offset:3px}
+@media(max-width:460px){.soloOverrideRow{align-items:stretch}.soloOverrideRow .soloResetBtn{width:100%}}
