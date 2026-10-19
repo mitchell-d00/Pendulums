@@ -298,7 +298,10 @@
       model.accumulator+=realDt*model.speed;
       let loops=0;
       while(model.accumulator>=P.FIXED_DT&&loops<80){
-        for(const p of model.pendulums)P.step(p,P.FIXED_DT,model.gravity,model.damping);
+        for(let i=0;i<model.pendulums.length;i++){
+          const damping=model.configs[i].damping ?? model.damping;
+          P.step(model.pendulums[i],P.FIXED_DT,model.gravity,damping);
+        }
         model.time+=P.FIXED_DT;model.simSteps++;
         if(model.simSteps%SAMPLE_STEPS===0)for(let i=0;i<model.count;i++)storeSample(i);
         model.accumulator-=P.FIXED_DT;loops++;
@@ -395,6 +398,7 @@
     if(!settings||!Number.isFinite(settings.gravity)||settings.gravity<0||settings.gravity>20||!Number.isFinite(settings.damping)||settings.damping<0||settings.damping>.5||!Number.isFinite(settings.speed)||settings.speed<.25||settings.speed>3||!STYLE[settings.theme]||!Number.isFinite(settings.weight)||settings.weight<.6||settings.weight>4)throw new Error('Invalid simulation settings.');
     if(json.tracks.some((tr,i)=>{
       try{P.makePendulum({...tr.config,id:i});}catch{return true;}
+      if(tr.config.damping!==undefined&&(!Number.isFinite(tr.config.damping)||tr.config.damping<0||tr.config.damping>.5))return true;
       return !tr||!validateColor(tr.config.color)||typeof tr.visible!=='boolean'||!tr.current||
         !Array.isArray(tr.current.r)||!Array.isArray(tr.current.v)||tr.current.r.length!==3||tr.current.v.length!==3||
         ![...tr.current.r,...tr.current.v,tr.current.distance,tr.current.groundDistance].every(Number.isFinite)||
@@ -467,6 +471,38 @@
   window.Pendulums = Object.freeze({
     get status(){return {running:model.running,time:model.time,count:model.count,gravity:model.gravity,damping:model.damping,speed:model.speed,preset:model.preset,releaseHeading:model.releaseHeading};},
     getSnapshot(){return session();},
+    // Fast, bounded samples for 3D draw calls without copying whole CSV histories.
+    // The underlying physics states remain untouched by this viewer interface.
+    getVisualFrame(limit=1250){
+      const max=Math.min(2500,Math.max(150,Math.round(Number(limit))||1250));
+      return {time:model.time,preset:model.preset,releaseHeading:model.releaseHeading,
+        tracks:model.tracks.map((track,i)=>{
+          const n=track.samples.length,stride=Math.max(1,Math.ceil(n/max)),samples=[];
+          for(let j=0;j<n;j+=stride){const p=track.samples[j];samples.push([p.x,p.y,p.z]);}
+          if(n>1&&(n-1)%stride!==0){
+            const p=track.samples[n-1];samples.push([p.x,p.y,p.z]);
+          }
+          return {id:i,color:track.color,visible:track.visible,
+            xyz:[...model.pendulums[i].r],samples,length:model.pendulums[i].length};
+        })};
+    },
+    setTrailColors(colors){
+      if(!Array.isArray(colors)||colors.length!==model.count||!colors.every(validateColor))
+        throw Error('Supply a #RRGGBB color for every active pendulum.');
+      colors.forEach((c,i)=>{
+        model.configs[i].color=c;
+        model.tracks[i].color=c;
+        model.pendulums[i].color=c;
+      });
+      model.tracksDirty=true;applyFocus();renderRows();renderCanvas();
+      return model.count;
+    },
+    setIndividualDamping(index,rate){
+      if(!Number.isInteger(index)||index<0||index>=model.count)throw RangeError('Invalid pendulum index');
+      if(!Number.isFinite(rate)||rate<0||rate>.5)throw RangeError('Individual damping must be from 0 to 0.5 s^-1');
+      model.configs[index].damping=rate;
+      return {index,damping:rate};
+    },
     play(){model.running=true;updateControls();},pause(){model.running=false;updateControls();},
     clearSand,fitView(){model.zoom=1;model.panX=0;model.panY=0;model.groundDirty=true;model.tracksDirty=true;renderCanvas();}
   });
