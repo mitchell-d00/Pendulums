@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101918">
-  <meta name="description" content="Pendulums: a top-down 30-pendulum physics sandbox that draws the actual paths of freely swinging spherical pendulums.">
+  <meta name="description" content="Pendulums: an offline physics sandbox with up to 30 spherical pendulums, an interactive XYZ studio, a top-down map, individual motion overrides, and layered artwork.">
   <title>Pendulums — Sand &amp; Motion Lab</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="studio3d.css">
@@ -57,11 +57,11 @@
         <div class="releaseFields"><span>0°</span><label for="releaseExact">Exact angle <input id="releaseExact" type="number" min="0" max="359" step="1" value="0" inputmode="numeric" aria-label="Exact release direction, whole degrees from 0 to 359">°</label><span>359°</span></div>
         <div class="releaseWheelPanel">
           <canvas id="releaseDial" width="196" height="196" aria-label="Clickable 360 degree release direction wheel"></canvas>
-          <div class="releaseWheelText"><strong>Choose a starting direction</strong><p>Every 1° is a unique release position around the pivot. Drag the wheel or use the slider. Apply rotates the whole pattern, without changing string length or gravity.</p></div>
+          <div class="releaseWheelText"><strong>Choose a starting direction</strong><p>Choose a 0–359° ensemble heading with the wheel or slider. Apply restarts the arrangement with that offset; individual overrides keep their own settings.</p></div>
         </div>
       </div>
       <button id="apply" class="fullBtn bottomApply" type="button">↺ &nbsp; Apply arrangement</button>
-      <p class="microcopy">Pattern, count and release angle take effect on Apply. Inward spirals automatically use light damping (0.055 s⁻¹) so their physical paths tighten over time. Set damping to zero for undamped closed or precessing loops. Every visible line is still simulated motion.</p>
+      <p class="microcopy">Pattern, count and release angle take effect on Apply, which restarts all bobs while preserving individual overrides. Applying Inward spirals adds light damping (0.055 s⁻¹) when ensemble damping is zero. Individual damping takes priority. Every visible line is simulated motion.</p>
     </section>
     <section class="controlCard">
       <div class="sectionTitle"><span>02</span><h2>The sand</h2></div>
@@ -129,7 +129,7 @@
                 <button id="soloResetOverride" type="button" class="soloResetBtn" aria-label="Clear the selected pendulum override and return to ensemble settings">Reset selected to ensemble</button>
               </div>
               <div id="soloAssignments" class="studioInfo">Set different motion recipes for each of your 30 pendulums.</div>
-            </div><p class="studioInfo">Colors and camera position do not change forces, mass, length, or energy. Apply a new pattern to build an artwork overlay.</p>
+            </div><p class="studioInfo">Colors and camera position do not change physics. Save a layer before downloading layered art JSON; live trails are not included automatically. Load art JSON restores layers only. Save a JSON session separately to resume physics.</p>
             <div class="studioActions"><button id="studioPNG">↓ 3D PNG</button><button id="studioSaveArt">↓ Layered art JSON</button><button onclick="document.getElementById('studioImportArt').click()">↑ Load art JSON</button><input id="studioImportArt" type="file" accept=".json,application/json" hidden></div>
           </div>
         </div><div class="studioNotice" id="studioNotice" role="status" aria-live="polite">The 3D camera is independent of the pendulum motion. Physics stays unchanged.</div>
