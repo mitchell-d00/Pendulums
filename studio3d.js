@@ -261,8 +261,8 @@
     }
     $('#editColor').value=config.color;
     // The primary calculator inspector still owns the physically constrained reset.
-    // Its handler does not know per-bob drag, so apply the validated override
-    // through the narrow API after it finishes resetting only the chosen bob.
+    // Its handler preserves existing per-bob drag; apply the newly validated
+    // damping value through the API after it resets only the chosen bob.
     $('#updateOne').click();
     window.Pendulums.setIndividualDamping(id,config.damping);
     const recipe=$('#soloPreset').value;

@@ -518,7 +518,8 @@
   if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>{resize();renderCanvas();drawEnergy();}).observe(canvas);
   window.addEventListener('resize',()=>{resize();renderCanvas();drawEnergy();});
   document.addEventListener('visibilitychange',()=>{model.lastFrame=0;model.accumulator=0;});
-  // Stable no-key read-only hooks for reproducible browser tests / agents.
+  // Local snapshot readers and explicit state-changing helpers for the studio
+  // and reproducible browser tests. No API key or network access is required.
   window.Pendulums = Object.freeze({
     get status(){return {running:model.running,time:model.time,count:model.count,gravity:model.gravity,damping:model.damping,speed:model.speed,preset:model.preset,releaseHeading:model.releaseHeading};},
     getSnapshot(){return session();},
